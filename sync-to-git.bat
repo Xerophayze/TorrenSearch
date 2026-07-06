@@ -157,7 +157,7 @@ if not errorlevel 1 (
         goto :done
     )
     echo Pushing any unpushed commits...
-    git -C "%REPO_DIR%" push -u %REMOTE% %BRANCH%
+    call :push_current
     if errorlevel 1 (
         echo ERROR: git push failed. You may need to pull first or authenticate with GitHub.
         pause
@@ -181,7 +181,7 @@ if errorlevel 1 (
 
 echo.
 echo --- Pushing to GitHub ---
-git -C "%REPO_DIR%" push -u %REMOTE% %BRANCH%
+call :push_current
 if errorlevel 1 (
     echo ERROR: git push failed. You may need to pull first or authenticate with GitHub.
     pause
@@ -191,6 +191,29 @@ if errorlevel 1 (
 echo.
 echo Push complete!
 goto :done
+
+REM ============================================================
+:push_current
+REM Push current branch. If GitHub has an initial README/LICENSE
+REM commit that is not in this local repo yet, merge it once and retry.
+REM ============================================================
+git -C "%REPO_DIR%" push -u %REMOTE% %BRANCH%
+if not errorlevel 1 exit /b 0
+
+echo.
+echo Push was rejected. Fetching and trying to integrate remote %BRANCH%...
+git -C "%REPO_DIR%" fetch %REMOTE%
+if errorlevel 1 exit /b 1
+
+git -C "%REPO_DIR%" merge %REMOTE%/%BRANCH% --allow-unrelated-histories --no-edit
+if errorlevel 1 (
+    echo.
+    echo Automatic merge failed. Resolve conflicts, then run this script again.
+    exit /b 1
+)
+
+git -C "%REPO_DIR%" push -u %REMOTE% %BRANCH%
+exit /b %errorlevel%
 
 REM ============================================================
 :do_pull

@@ -23,3 +23,7 @@ standalone-package/.env.*
 
 # Local/generated documents
 TorrenSearch_Architecture_Guide.docx
+
+# Local-only Git helper
+sync-to-git.bat
+sync_to_git.bat

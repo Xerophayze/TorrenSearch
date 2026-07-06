@@ -1,3 +1,4 @@
+<img width="2472" height="1584" alt="chrome_ahHWKgsp3M" src="https://github.com/user-attachments/assets/ef434390-1c93-47f8-8927-a7a7a71d0fe6" />
 # TorrenSearch
 
 TorrenSearch is a self-hosted torrent search and qBittorrent management UI. It provides a browser front end plus a small Node.js backend that can search public torrent APIs, query Prowlarr, send results to qBittorrent, and monitor slow torrents.

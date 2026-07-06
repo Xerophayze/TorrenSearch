@@ -1,0 +1,25 @@
+.data/
+.agents/
+.codex/
+node_modules/
+npm-debug.log*
+.env
+.env.*
+!.env.example
+
+# Runtime settings, logs, and generated state
+native-package/data/
+native-package/logs/
+native-package/vpn/*.conf
+native-package/vpn/*.zip
+native-package/vpn/*.ovpn
+standalone-package/data/
+standalone-package/downloads/
+standalone-package/.env
+standalone-package/.env.*
+!standalone-package/.env.example
+*.log
+*.pid
+
+# Local/generated documents
+TorrenSearch_Architecture_Guide.docx

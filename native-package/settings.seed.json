@@ -1,0 +1,13 @@
+{
+  "mode": "backend",
+  "proxyTemplate": "/proxy?url={url}",
+  "prowlarrUrl": "http://127.0.0.1:9696",
+  "prowlarrLimit": 100,
+  "qbUrl": "http://127.0.0.1:8080",
+  "qbPollSeconds": 5,
+  "enabledProviders": {
+    "prowlarr": true
+  },
+  "slowMonitorIgnorePaused": true,
+  "slowMonitorAddTrackers": true
+}

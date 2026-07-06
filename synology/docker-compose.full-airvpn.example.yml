@@ -1,0 +1,77 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=airvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${AIRVPN_WIREGUARD_PRIVATE_KEY}
+      - WIREGUARD_PRESHARED_KEY=${AIRVPN_WIREGUARD_PRESHARED_KEY}
+      - WIREGUARD_ADDRESSES=${AIRVPN_WIREGUARD_ADDRESSES}
+      - WIREGUARD_MTU=${WIREGUARD_MTU:-1320}
+      - FIREWALL_VPN_INPUT_PORTS=${VPN_INPUT_PORTS:-8787,8080,9696}
+      - FIREWALL_OUTBOUND_SUBNETS=${LAN_SUBNETS:-192.168.0.0/16,10.0.0.0/8,172.16.0.0/12}
+    volumes:
+      - ${GLUETUN_CONFIG_PATH:-/volume2/docker/torrent-vpn/gluetun}:/gluetun
+    ports:
+      - "${TORRENSEARCH_PORT:-8787}:8787"
+      - "${QBITTORRENT_WEBUI_PORT:-8080}:8080"
+      - "${PROWLARR_PORT:-9696}:9696"
+    restart: unless-stopped
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: service:gluetun
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+      - WEBUI_PORT=8080
+    volumes:
+      - ${QBITTORRENT_CONFIG_PATH:-/volume2/docker/torrent-vpn/qbittorrent}:/config
+      - ${MEDIA_PATH:-/volume1/Media}:/media
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: service:gluetun
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      - ${PROWLARR_CONFIG_PATH:-/volume2/docker/torrent-vpn/prowlarr}:/config
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    restart: unless-stopped
+
+  torrensearch:
+    image: node:22-alpine
+    container_name: torrensearch
+    network_mode: service:gluetun
+    working_dir: /app
+    command: ["node", "server.js"]
+    volumes:
+      - ${TORRENSEARCH_APP_PATH:-/volume2/docker/torrensearch}:/app:ro
+      - ${TORRENSEARCH_DATA_PATH:-/volume2/docker/torrensearch-data}:/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8787
+      - DATA_DIR=/data
+      - PROWLARR_FALLBACK_URLS=http://127.0.0.1:9696,http://localhost:9696,http://[::1]:9696
+      - PROXY_TOKEN=${PROXY_TOKEN:-}
+      - ALLOWED_PROXY_HOSTS=${ALLOWED_PROXY_HOSTS:-}
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    restart: unless-stopped

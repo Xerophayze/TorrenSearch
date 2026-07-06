@@ -1,0 +1,12 @@
+.git
+.agents
+.codex
+node_modules
+npm-debug.log
+*.log
+.data
+native-package/data
+native-package/logs
+standalone-package/data
+standalone-package/downloads
+*.docx

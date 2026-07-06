@@ -1,0 +1,4497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>TorrenSearch</title>
+  <style>
+    :root {
+      --bg: #05070b;
+      --panel: #0c1220;
+      --panel-2: #111a2b;
+      --field: #172338;
+      --field-hover: #1d2d48;
+      --text: #eef6ff;
+      --muted: #9fb1ca;
+      --line: #2a3a55;
+      --line-strong: #3d5f8f;
+      --accent: #2f8cff;
+      --accent-2: #7cc4ff;
+      --warn: #ffc15a;
+      --danger: #ff7a7a;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .46);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 8%, rgba(47, 140, 255, .22), transparent 32rem),
+        radial-gradient(circle at 92% 0%, rgba(124, 196, 255, .16), transparent 30rem),
+        var(--bg);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 4vw, 3.3rem);
+      line-height: .95;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: .96rem;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(12, 18, 32, .86);
+      color: var(--muted);
+      font-size: .82rem;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .dot.ok {
+      background: var(--accent);
+    }
+
+    .dot.warn {
+      background: var(--warn);
+    }
+
+    .search-panel {
+      background: rgba(12, 18, 32, .92);
+      border: 1px solid rgba(124, 196, 255, .14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      backdrop-filter: blur(18px);
+    }
+
+    .search-form {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 150px 126px 150px;
+      gap: 10px;
+    }
+
+    .field {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .field svg {
+      position: absolute;
+      left: 13px;
+      width: 19px;
+      height: 19px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .field input,
+    .field select,
+    .settings-grid input,
+    .settings-grid select {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 14px;
+      color: var(--text);
+      background: var(--field);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    .field input:hover,
+    .field select:hover,
+    .settings-grid input:hover,
+    .settings-grid select:hover {
+      border-color: var(--line-strong);
+      background: var(--field-hover);
+    }
+
+    .field input {
+      padding-left: 42px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .settings-grid input:focus,
+    .settings-grid select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 140, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    .primary {
+      height: 48px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #031124;
+      font-weight: 800;
+    }
+
+    .secondary {
+      height: 48px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: var(--field);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .primary:disabled,
+    .secondary:disabled {
+      cursor: not-allowed;
+      opacity: .58;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 4px;
+      background: rgba(5, 7, 11, .66);
+    }
+
+    .mode-switch button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 10px;
+      color: var(--muted);
+      background: transparent;
+      font-size: .86rem;
+      font-weight: 750;
+    }
+
+    .mode-switch button.active {
+      color: #031124;
+      background: var(--accent);
+    }
+
+    .runtime-warning {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 193, 90, .42);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      color: var(--text);
+      background: rgba(255, 193, 90, .12);
+      font-size: .84rem;
+      line-height: 1.35;
+    }
+
+    .runtime-warning.show {
+      display: flex;
+    }
+
+    .runtime-warning strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .runtime-warning button {
+      flex: 0 0 auto;
+      min-height: 34px;
+      border: 1px solid rgba(255, 193, 90, .5);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      color: var(--text);
+      background: rgba(17, 26, 43, .92);
+      font-size: .8rem;
+      font-weight: 750;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 8px 0 0;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      background: rgba(17, 26, 43, .82);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .check input {
+      accent-color: var(--accent);
+    }
+
+    .settings {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    .settings summary {
+      width: fit-content;
+      color: var(--accent-2);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .settings-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .settings-grid .wide {
+      grid-column: 1 / -1;
+    }
+
+    .settings-note {
+      grid-column: 1 / -1;
+      margin: 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    .qb-options {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qb-options strong {
+      width: 100%;
+      color: var(--text);
+    }
+
+    .mini-button {
+      min-height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      color: var(--text);
+      background: var(--field);
+      font-size: .8rem;
+      font-weight: 750;
+    }
+
+    .main-grid {
+      margin-top: 16px;
+    }
+
+    .filter-panel,
+    .qb-panel {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    .filter-panel summary,
+    .qb-panel summary {
+      width: fit-content;
+      color: var(--accent-2);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .filter-summary {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 650;
+      margin-left: 8px;
+    }
+
+    .filter-panel[open] .filter-summary,
+    .qb-panel[open] .filter-summary {
+      color: var(--accent-2);
+    }
+
+    .empty,
+    .result-card,
+    .qb-row {
+      border: 1px solid rgba(237, 245, 241, .08);
+      border-radius: var(--radius);
+      background: rgba(12, 18, 32, .86);
+    }
+
+    .result-filters {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .result-filters label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .result-filters input,
+    .result-filters select {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      color: var(--text);
+      background: var(--field);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    .result-filters input:hover,
+    .result-filters select:hover {
+      border-color: var(--line-strong);
+      background: var(--field-hover);
+    }
+
+    .result-filters input:focus,
+    .result-filters select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 140, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    .preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .preset-row button {
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 8px;
+      color: var(--muted);
+      background: rgba(17, 26, 43, .82);
+      font-size: .72rem;
+      font-weight: 750;
+    }
+
+    .preset-row button:hover,
+    .preset-row button.active {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(47, 140, 255, .2);
+    }
+
+    .pager {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: .84rem;
+      white-space: nowrap;
+    }
+
+    .pager.show {
+      display: inline-flex;
+    }
+
+    .result-pager.show {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .icon-button,
+    .action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: var(--field);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .icon-button {
+      width: 40px;
+      height: 38px;
+    }
+
+    .icon-button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    .icon-button.danger {
+      border-color: rgba(255, 122, 122, .42);
+      color: var(--danger);
+    }
+
+    .icon-button svg,
+    .action svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .results {
+      display: grid;
+      gap: 6px;
+    }
+
+    .result-card {
+      overflow: hidden;
+    }
+
+    .result-summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      min-height: 42px;
+      border: 0;
+      padding: 9px 11px;
+      color: inherit;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .result-summary:focus-visible {
+      outline: 3px solid rgba(47, 140, 255, .28);
+      outline-offset: -3px;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--text);
+      font-size: .95rem;
+      line-height: 1.24;
+      overflow-wrap: anywhere;
+    }
+
+    .expand-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: var(--muted);
+      transition: transform .16s ease;
+    }
+
+    .expand-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .result-details {
+      padding: 9px 11px 11px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 0;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat strong {
+      color: var(--text);
+    }
+
+    .sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .source-tag {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 7px;
+      color: var(--muted);
+      background: rgba(17, 26, 43, .9);
+      font-size: .72rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .action {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      padding: 0;
+      font-weight: 750;
+    }
+
+    .action.accent {
+      background: rgba(47, 140, 255, .18);
+      border-color: rgba(47, 140, 255, .5);
+      color: var(--accent);
+    }
+
+    .action.qb-send {
+      background: rgba(124, 196, 255, .13);
+      border-color: rgba(124, 196, 255, .42);
+      color: var(--accent-2);
+    }
+
+    .qb-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .qb-status {
+      margin-left: 4px;
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .qb-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .qb-row {
+      overflow: hidden;
+      border-left: 4px solid rgba(159, 177, 202, .34);
+    }
+
+    .qb-row-summary {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      min-height: 48px;
+      padding: 9px 10px;
+    }
+
+    .qb-row-main {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      border: 0;
+      color: inherit;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .qb-row input {
+      accent-color: var(--accent);
+    }
+
+    .qb-name {
+      min-width: 0;
+    }
+
+    .qb-name strong {
+      display: block;
+      overflow: hidden;
+      color: var(--text);
+      font-size: .86rem;
+      line-height: 1.25;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .qb-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .qb-state-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 18px;
+      border: 1px solid rgba(159, 177, 202, .2);
+      border-radius: 999px;
+      padding: 1px 7px;
+      color: var(--text);
+      background: rgba(159, 177, 202, .12);
+      font-size: .68rem;
+      line-height: 1.2;
+    }
+
+    .qb-progress {
+      width: 94px;
+      height: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(159, 177, 202, .18);
+    }
+
+    .qb-progress span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .qb-row.state-downloading,
+    .qb-row.state-active {
+      border-left-color: #2dd4bf;
+    }
+
+    .qb-row.state-downloading .qb-progress span,
+    .qb-row.state-active .qb-progress span {
+      background: #2dd4bf;
+    }
+
+    .qb-row.state-seeding {
+      border-left-color: #a3e635;
+    }
+
+    .qb-row.state-seeding .qb-progress span {
+      background: #a3e635;
+    }
+
+    .qb-row.state-paused,
+    .qb-row.state-stopped {
+      border-left-color: #94a3b8;
+    }
+
+    .qb-row.state-paused .qb-progress span,
+    .qb-row.state-stopped .qb-progress span {
+      background: #94a3b8;
+    }
+
+    .qb-row.state-stalled {
+      border-left-color: #f59e0b;
+    }
+
+    .qb-row.state-stalled .qb-progress span {
+      background: #f59e0b;
+    }
+
+    .qb-row.state-error {
+      border-left-color: #fb7185;
+    }
+
+    .qb-row.state-error .qb-progress span {
+      background: #fb7185;
+    }
+
+    .qb-detail-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: var(--muted);
+      transition: transform .16s ease;
+    }
+
+    .qb-detail-toggle svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .qb-detail {
+      display: grid;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .qb-detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .qb-category-editor {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) minmax(150px, 1fr) auto;
+      gap: 8px;
+      align-items: end;
+      margin: 10px 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px;
+      background: rgba(17, 26, 43, .5);
+    }
+
+    .qb-category-editor label {
+      margin: 0;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .qb-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(95px, 1fr));
+      gap: 6px;
+    }
+
+    .qb-detail-stat {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 7px 8px;
+      background: rgba(17, 26, 43, .66);
+      color: var(--muted);
+      font-size: .72rem;
+      min-width: 0;
+    }
+
+    .qb-detail-stat strong {
+      display: block;
+      margin-top: 2px;
+      color: var(--text);
+      font-size: .8rem;
+      overflow-wrap: anywhere;
+    }
+
+    .qb-detail-section h3 {
+      margin: 2px 0 6px;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.2;
+    }
+
+    .qb-file-list,
+    .qb-tracker-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .qb-file-row,
+    .qb-tracker-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(159, 177, 202, .18);
+      border-radius: 6px;
+      padding: 6px 7px;
+      color: var(--muted);
+      background: rgba(5, 7, 11, .22);
+      font-size: .72rem;
+      min-width: 0;
+    }
+
+    .qb-file-row strong,
+    .qb-tracker-row strong {
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .qb-file-row span,
+    .qb-tracker-row span {
+      white-space: nowrap;
+    }
+
+    .provider-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .provider {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 9px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: rgba(17, 26, 43, .78);
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .provider strong {
+      display: block;
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    .provider small {
+      color: var(--muted);
+    }
+
+    .empty {
+      padding: 28px 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      max-width: min(420px, calc(100vw - 32px));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 11px 13px;
+      background: #070b12;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      transform: translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .18s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, .58);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    #qbAddModal {
+      z-index: 30;
+    }
+
+    .dialog {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #07101f;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .detail-dialog {
+      width: min(760px, 100%);
+      max-height: min(84vh, 760px);
+      overflow: auto;
+    }
+
+    .dialog h2 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+
+    .dialog p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.4;
+    }
+
+    .dialog label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .dialog input,
+    .dialog select {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      color: var(--text);
+      background: var(--field);
+      outline: none;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .modal-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .modal-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: var(--field);
+      font-weight: 800;
+    }
+
+    .modal-close svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 860px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status-row {
+        justify-content: flex-start;
+      }
+
+      .search-form,
+      .settings-grid,
+      .result-filters {
+        grid-template-columns: 1fr;
+      }
+
+      .qb-row-summary {
+        grid-template-columns: auto 1fr;
+      }
+
+      .qb-row-main {
+        grid-template-columns: 1fr auto;
+      }
+
+      .qb-progress {
+        grid-column: 1;
+        width: 100%;
+      }
+
+      .qb-detail-toggle {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+      }
+
+      .qb-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .qb-category-editor {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 18px, 1180px);
+        padding-top: 16px;
+      }
+
+      .search-panel {
+        padding: 12px;
+      }
+
+      .runtime-warning {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .result-summary {
+        min-height: 40px;
+        padding: 8px 9px;
+      }
+
+      .qb-detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>TorrenSearch</h1>
+        <span>Unified public torrent lookup with copy-ready magnet links.</span>
+      </div>
+    </header>
+
+    <section class="search-panel" aria-label="Search controls">
+      <div class="runtime-warning" id="runtimeWarning" role="status" aria-live="polite">
+        <div>
+          <strong id="runtimeWarningTitle">Proxy notice</strong>
+          <span id="runtimeWarningText"></span>
+        </div>
+        <button id="useLocalProxyButton" type="button">Use local proxy</button>
+      </div>
+      <div class="mode-switch" role="group" aria-label="Search mode">
+        <button id="csvOnlyModeButton" type="button">Torrents.csv only</button>
+        <button id="backendModeButton" type="button">Backend proxy</button>
+      </div>
+      <form class="search-form" id="searchForm">
+        <label class="field">
+          <span class="sr-only">Search query</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+          <input id="query" autocomplete="off" placeholder="Search torrents..." required>
+        </label>
+        <label class="field">
+          <span class="sr-only">Content category</span>
+          <select id="contentTypeSelect"></select>
+        </label>
+        <button class="primary" id="searchButton" type="submit">Search</button>
+        <button class="secondary" id="topButton" type="button">Top torrents</button>
+      </form>
+
+      <details class="settings">
+        <summary>Settings</summary>
+        <div class="settings-grid">
+          <section class="settings-note">
+            <strong>Providers</strong>
+            <div class="filters" id="providerToggles" aria-label="Providers"></div>
+          </section>
+          <section class="settings-note">
+            <strong>Provider Status</strong>
+            <div class="status-row" id="statusPills" aria-live="polite"></div>
+            <div class="provider-list" id="providerStatus"></div>
+          </section>
+          <label>
+            CORS proxy preset
+            <select id="proxyPreset"></select>
+          </label>
+          <label>
+            Optional CORS proxy template
+            <input id="proxyTemplate" placeholder="https://api.allorigins.win/raw?url={url}">
+          </label>
+          <label>
+            Magnet tracker list
+            <input id="trackerList" placeholder="udp://tracker.opentrackr.org:1337/announce, ...">
+          </label>
+          <section class="settings-note qb-options">
+            <strong>Public tracker list</strong>
+            <button id="trackerRefreshButton" class="mini-button" type="button">Update from ngosang</button>
+            <span id="trackerRefreshStatus">Uses trackers_best.txt.</span>
+          </section>
+          <label>
+            Jackett Torznab URL
+            <input id="jackettUrl" autocomplete="off" placeholder="http://127.0.0.1:9117/api/v2.0/indexers/all/results/torznab/api">
+          </label>
+          <label>
+            Jackett API key
+            <input id="jackettKey" autocomplete="off" placeholder="Jackett API key">
+          </label>
+          <label>
+            Prowlarr URL
+            <input id="prowlarrUrl" autocomplete="off" placeholder="http://127.0.0.1:9696">
+          </label>
+          <label>
+            Prowlarr API key
+            <input id="prowlarrKey" autocomplete="off" placeholder="Prowlarr API key">
+          </label>
+          <label>
+            Prowlarr results per indexer
+            <input id="prowlarrLimit" type="number" inputmode="numeric" min="20" max="500" step="10">
+          </label>
+          <label>
+            qBittorrent URL
+            <input id="qbUrl" autocomplete="off" placeholder="http://127.0.0.1:8080">
+          </label>
+          <label>
+            qBittorrent username
+            <input id="qbUsername" autocomplete="username" placeholder="admin">
+          </label>
+          <label>
+            qBittorrent password
+            <input id="qbPassword" type="password" autocomplete="current-password" placeholder="WebUI password">
+          </label>
+          <label>
+            qBittorrent API key
+            <input id="qbApiKey" type="password" autocomplete="off" placeholder="Preferred if generated in qBittorrent">
+          </label>
+          <label>
+            qBittorrent refresh
+            <select id="qbPollSeconds">
+              <option value="2">2 seconds</option>
+              <option value="3">3 seconds</option>
+              <option value="5">5 seconds</option>
+              <option value="10">10 seconds</option>
+            </select>
+          </label>
+          <label>
+            qBittorrent category
+            <input id="qbCategory" autocomplete="off" placeholder="Optional category">
+          </label>
+          <label>
+            qBittorrent save path
+            <input id="qbSavePath" autocomplete="off" placeholder="Optional save path">
+          </label>
+          <section class="settings-note qb-options">
+            <strong>qBittorrent add options</strong>
+            <label class="check"><input id="qbAddPaused" type="checkbox"> Add paused</label>
+            <label class="check"><input id="qbSequential" type="checkbox"> Sequential</label>
+            <label class="check"><input id="qbFirstLastPiece" type="checkbox"> First and last pieces</label>
+            <button id="qbTestButton" class="mini-button" type="button">Test qBittorrent</button>
+            <span id="qbTestStatus"></span>
+          </section>
+          <section class="settings-note qb-options">
+            <strong>Slow torrent backend monitor</strong>
+            <label class="check"><input id="slowMonitorEnabled" type="checkbox"> Monitor slow downloads</label>
+            <label>
+              Check every minutes
+              <input id="slowMonitorCheckMinutes" type="number" inputmode="numeric" min="1" max="240" step="1">
+            </label>
+            <label>
+              Slow below KB/s
+              <input id="slowMonitorMinKibPerSecond" type="number" inputmode="numeric" min="1" step="1">
+            </label>
+            <label>
+              Slow for minutes
+              <input id="slowMonitorSlowMinutes" type="number" inputmode="numeric" min="1" max="1440" step="1">
+            </label>
+            <label>
+              Cooldown minutes
+              <input id="slowMonitorCooldownMinutes" type="number" inputmode="numeric" min="5" max="10080" step="5">
+            </label>
+            <label>
+              Ignore above %
+              <input id="slowMonitorIgnoreProgressPercent" type="number" inputmode="numeric" min="10" max="100" step="1">
+            </label>
+            <label class="check"><input id="slowMonitorIgnorePaused" type="checkbox"> Ignore paused or queued torrents</label>
+            <label class="check"><input id="slowMonitorAddTrackers" type="checkbox"> Add tracker list before retrying</label>
+            <label class="check"><input id="slowMonitorSearchAlternatives" type="checkbox"> Search Prowlarr for alternatives</label>
+            <span id="slowMonitorStatus">Backend monitor is off.</span>
+          </section>
+          <p class="settings-note">Jackett and Prowlarr unlock many more trackers through one local API. Direct browser access depends on their CORS settings; public CORS proxies usually cannot reach your private localhost services.</p>
+          <p class="settings-note">qBittorrent control uses the saved WebUI URL and credentials from the TorrenSearch backend. Use the URL that the TorrenSearch backend can reach. On the Synology Gluetun setup, that is often <code>http://127.0.0.1:8080</code>, not the external VPN-forwarded address. Keep this app private to your LAN or VPN.</p>
+          <p class="settings-note">Public proxy presets are best-effort only. A provider can be ready before search and still fail if that proxy blocks the target site. For reliable multi-provider results, run the local TorrenSearch proxy or your own hosted proxy.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="main-grid">
+      <details class="filter-panel" id="filterPanel">
+        <summary>
+          <span>Filters</span>
+          <span class="filter-summary" id="filterSummary">Default</span>
+        </summary>
+        <div class="result-filters" aria-label="Result filters">
+          <label>
+            Sort by
+            <select id="sort">
+              <option value="seeders">Seeders</option>
+              <option value="leechers">Leechers</option>
+              <option value="sources">Sources</option>
+              <option value="size">Size</option>
+              <option value="name">Name</option>
+            </select>
+          </label>
+          <label>
+            Min seeders
+            <input id="minSeeders" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+            <span class="preset-row" aria-label="Minimum seeder presets">
+              <button type="button" data-preset-target="minSeeders" data-preset-value="">Any</button>
+              <button type="button" data-preset-target="minSeeders" data-preset-value="10">10+</button>
+              <button type="button" data-preset-target="minSeeders" data-preset-value="25">25+</button>
+              <button type="button" data-preset-target="minSeeders" data-preset-value="50">50+</button>
+              <button type="button" data-preset-target="minSeeders" data-preset-value="100">100+</button>
+            </span>
+          </label>
+          <label>
+            Max leechers
+            <input id="maxLeechers" type="number" inputmode="numeric" min="0" step="1" placeholder="Any">
+            <span class="preset-row" aria-label="Maximum leecher presets">
+              <button type="button" data-preset-target="maxLeechers" data-preset-value="">Any</button>
+              <button type="button" data-preset-target="maxLeechers" data-preset-value="10">10</button>
+              <button type="button" data-preset-target="maxLeechers" data-preset-value="25">25</button>
+              <button type="button" data-preset-target="maxLeechers" data-preset-value="50">50</button>
+              <button type="button" data-preset-target="maxLeechers" data-preset-value="100">100</button>
+            </span>
+          </label>
+          <label>
+            Min size (GB)
+            <input id="minSize" type="number" inputmode="decimal" min="0" step="0.1" placeholder="Any">
+            <span class="preset-row" aria-label="Minimum size presets">
+              <button type="button" data-preset-target="minSize" data-preset-value="">Any</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="1">1</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="2">2</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="5">5</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="10">10</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="20">20</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="50">50</button>
+              <button type="button" data-preset-target="minSize" data-preset-value="100">100</button>
+            </span>
+          </label>
+          <label>
+            Sort direction
+            <select id="sortDirection">
+              <option value="desc">High to low</option>
+              <option value="asc">Low to high</option>
+            </select>
+          </label>
+        </div>
+      </details>
+      <details class="qb-panel" id="qbPanel">
+        <summary>
+          <span>qBittorrent</span>
+          <span class="filter-summary" id="qbSummary">Not connected</span>
+        </summary>
+        <div class="qb-toolbar" aria-label="qBittorrent controls">
+          <button class="icon-button" id="qbRefreshButton" type="button" title="Refresh torrents" aria-label="Refresh torrents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"></path><path d="M3 21v-5h5"></path><path d="M3 12A9 9 0 0 1 18.5 5.7L21 8"></path><path d="M21 3v5h-5"></path></svg>
+          </button>
+          <button class="icon-button" id="qbStartButton" type="button" title="Start selected" aria-label="Start selected">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+          </button>
+          <button class="icon-button" id="qbStopButton" type="button" title="Stop selected" aria-label="Stop selected">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+          </button>
+          <button class="icon-button" id="qbForceButton" type="button" title="Force start selected" aria-label="Force start selected">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 4 15 12 5 20V4zm10 0h4v16h-4V4z"></path></svg>
+          </button>
+          <button class="icon-button" id="qbReannounceButton" type="button" title="Reannounce selected" aria-label="Reannounce selected">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="m4.93 4.93 2.83 2.83"></path><path d="m16.24 16.24 2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="m4.93 19.07 2.83-2.83"></path><path d="m16.24 7.76 2.83-2.83"></path></svg>
+          </button>
+          <button class="icon-button" id="qbRecheckButton" type="button" title="Recheck selected" aria-label="Recheck selected">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+          </button>
+          <button class="icon-button danger" id="qbDeleteButton" type="button" title="Delete selected torrent" aria-label="Delete selected torrent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path></svg>
+          </button>
+          <span id="qbStatus" class="qb-status">Configure qBittorrent in Settings.</span>
+        </div>
+        <div class="qb-list" id="qbTorrentList"></div>
+      </details>
+      <div id="resultSummary" class="sr-only"><strong>Ready</strong> for a search.</div>
+      <div class="pager result-pager" id="pager" aria-label="Result pages">
+        <button class="icon-button" id="prevPageButton" type="button" title="Previous page" aria-label="Previous page" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <span id="pageLabel">Page 1 / 1</span>
+        <button class="icon-button" id="nextPageButton" type="button" title="Next page" aria-label="Next page" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+        </button>
+      </div>
+      <div class="results" id="results"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal" id="qbAddModal" role="dialog" aria-modal="true" aria-labelledby="qbAddTitle">
+    <div class="dialog">
+      <h2 id="qbAddTitle">Send to qBittorrent</h2>
+      <p id="qbAddName"></p>
+      <label>
+        Category
+        <select id="qbAddCategory"></select>
+      </label>
+      <label>
+        Custom category
+        <input id="qbAddCustomCategory" autocomplete="off" placeholder="Type a category name">
+      </label>
+      <div class="dialog-actions">
+        <button class="secondary" id="qbAddCancelButton" type="button">Cancel</button>
+        <button class="primary" id="qbAddConfirmButton" type="button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="resultDetailModal" role="dialog" aria-modal="true" aria-labelledby="resultDetailTitle">
+    <div class="dialog detail-dialog">
+      <div class="modal-header">
+        <h2 id="resultDetailTitle">Torrent details</h2>
+        <button class="modal-close" id="resultDetailCloseButton" type="button" aria-label="Close details">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <div id="resultDetailBody"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="qbDetailModal" role="dialog" aria-modal="true" aria-labelledby="qbDetailTitle">
+    <div class="dialog detail-dialog">
+      <div class="modal-header">
+        <h2 id="qbDetailTitle">qBittorrent torrent</h2>
+        <button class="modal-close" id="qbDetailCloseButton" type="button" aria-label="Close qBittorrent details">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <div id="qbDetailBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "torrent-search-settings-v1";
+    const MAX_RESULTS = 500;
+    const DEFAULT_PROWLARR_LIMIT = 100;
+    const PAGE_SIZE = 50;
+    const CORS_PROXY_PRESETS = [
+      { id: "local", name: "Local TorrenSearch proxy", template: () => defaultProxyTemplate() },
+      { id: "allorigins", name: "AllOrigins public proxy", template: () => "https://api.allorigins.win/raw?url={url}" },
+      { id: "corsproxyio", name: "corsproxy.io public proxy", template: () => "https://corsproxy.io/?{url}" },
+      { id: "codetabs", name: "CodeTabs public proxy", template: () => "https://api.codetabs.com/v1/proxy?quest={url}" },
+      { id: "custom", name: "Custom proxy template", template: () => "" }
+    ];
+    const DEFAULT_TRACKERS = [
+      "udp://tracker.opentrackr.org:1337/announce",
+      "udp://open.stealth.si:80/announce",
+      "udp://tracker.torrent.eu.org:451/announce",
+      "udp://exodus.desync.com:6969/announce",
+      "udp://tracker.internetwarriors.net:1337/announce"
+    ];
+    const NGOSANG_TRACKERS_BEST_URL = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt";
+    const CONTENT_TYPES = [
+      { value: "", label: "Any type" },
+      { value: "movies", label: "Movies" },
+      { value: "tv", label: "TV" },
+      { value: "anime", label: "Anime" },
+      { value: "music", label: "Music" },
+      { value: "games", label: "Games" },
+      { value: "software", label: "Software" },
+      { value: "books", label: "Books" },
+      { value: "adult", label: "XXX" },
+      { value: "other", label: "Other" }
+    ];
+
+    const providers = [
+      {
+        id: "torrentscsv",
+        name: "Torrents.csv",
+        kind: "JSON API",
+        direct: true,
+        enabled: true,
+        search: async (query, fetchUrl) => {
+          const url = `https://torrents-csv.com/service/search?q=${encodeURIComponent(query)}`;
+          const json = await fetchJson(fetchUrl(url));
+          return normalizeTorrentsCsvItems(json.torrents || [], query);
+        },
+        top: async (contentType, fetchUrl, emit) => {
+          const queries = torrentsCsvTopQueries(contentType);
+          const batches = await Promise.all(queries.map(async (query) => {
+            const url = `https://torrents-csv.com/service/search?q=${encodeURIComponent(query)}`;
+            const json = await fetchJson(fetchUrl(url));
+            return normalizeTorrentsCsvItems(json.torrents || [], query);
+          }));
+          return batches.flat();
+        }
+      },
+      {
+        id: "apibay",
+        name: "The Pirate Bay",
+        kind: "JSON API",
+        direct: false,
+        enabled: true,
+        search: async (query, fetchUrl, contentType) => {
+          const categories = pirateBaySearchCategories(contentType);
+          const urls = categories.length
+            ? categories.map((category) => `https://apibay.org/q.php?q=${encodeURIComponent(query)}&cat=${encodeURIComponent(category)}`)
+            : [`https://apibay.org/q.php?q=${encodeURIComponent(query)}`];
+          const batches = await Promise.all(urls.map((url) => fetchJson(fetchUrl(url))));
+          return normalizePirateBayItems(batches.flat());
+        },
+        top: async (contentType, fetchUrl) => {
+          const categories = pirateBayTopCategories(contentType);
+          const urls = categories.length
+            ? categories.map((category) => `https://apibay.org/precompiled/data_top100_${category}.json`)
+            : ["https://apibay.org/precompiled/data_top100_recent.json"];
+          const batches = await Promise.all(urls.map((url) => fetchJson(fetchUrl(url))));
+          return normalizePirateBayItems(batches.flat());
+        }
+      },
+      {
+        id: "nyaa",
+        name: "Nyaa",
+        kind: "RSS",
+        direct: false,
+        enabled: true,
+        search: async (query, fetchUrl, contentType) => {
+          if (contentType && contentType !== "anime") return [];
+          const url = `https://nyaa.si/?page=rss&q=${encodeURIComponent(query)}&c=0_0&f=0`;
+          const xml = await fetchText(fetchUrl(url));
+          const doc = new DOMParser().parseFromString(xml, "application/xml");
+          return [...doc.querySelectorAll("item")].map((item) => {
+            const magnet = text(item, "link");
+            return {
+              name: text(item, "title"),
+              infoHash: infoHashFromMagnet(magnet),
+              seeders: toNumber(text(item, "nyaa\\:seeders, seeders")),
+              leechers: toNumber(text(item, "nyaa\\:leechers, leechers")),
+              sizeBytes: parseSize(text(item, "nyaa\\:size, size")),
+              createdAt: text(item, "pubDate") ? new Date(text(item, "pubDate")) : null,
+              source: "Nyaa",
+              sourceKind: "RSS feed",
+              contentType: "anime",
+              magnet,
+              url: text(item, "guid") || magnet
+            };
+          }).filter((item) => item.infoHash || item.magnet);
+        },
+        top: async (contentType, fetchUrl) => {
+          if (contentType && contentType !== "anime") return [];
+          const xml = await fetchText(fetchUrl("https://nyaa.si/?page=rss"));
+          const doc = new DOMParser().parseFromString(xml, "application/xml");
+          return [...doc.querySelectorAll("item")].map((item) => {
+            const magnet = text(item, "link");
+            return {
+              name: text(item, "title"),
+              infoHash: infoHashFromMagnet(magnet),
+              seeders: toNumber(text(item, "nyaa\\:seeders, seeders")),
+              leechers: toNumber(text(item, "nyaa\\:leechers, leechers")),
+              sizeBytes: parseSize(text(item, "nyaa\\:size, size")),
+              createdAt: text(item, "pubDate") ? new Date(text(item, "pubDate")) : null,
+              source: "Nyaa",
+              sourceKind: "RSS feed",
+              contentType: "anime",
+              magnet,
+              url: text(item, "guid") || magnet
+            };
+          }).filter((item) => item.infoHash || item.magnet);
+        }
+      },
+      {
+        id: "yts",
+        name: "YTS",
+        kind: "Movie JSON API",
+        direct: false,
+        enabled: true,
+        search: async (query, fetchUrl, contentType) => {
+          if (contentType && contentType !== "movies") return [];
+          const movies = await fetchYtsMovies(fetchUrl, parseSearchQuery(query));
+          return normalizeYtsMovies(movies);
+        },
+        top: async (contentType, fetchUrl) => {
+          if (contentType && contentType !== "movies") return [];
+          const movies = await fetchYtsMovies(fetchUrl);
+          return normalizeYtsMovies(movies);
+        }
+      },
+      {
+        id: "academic",
+        name: "Academic Torrents",
+        kind: "Research RSS",
+        direct: false,
+        enabled: false,
+        search: async (query, fetchUrl) => {
+          const xml = await fetchText(fetchUrl("https://academictorrents.com/database.xml"));
+          const doc = parseXml(xml);
+          const terms = queryTerms(query);
+          return [...doc.querySelectorAll("item")]
+            .filter((item) => matchesTerms(`${text(item, "title")} ${text(item, "description")} ${text(item, "category")}`, terms))
+            .slice(0, MAX_RESULTS)
+            .map((item) => {
+              const infoHash = text(item, "infohash");
+              return {
+                name: text(item, "title"),
+                infoHash,
+                seeders: 0,
+                leechers: 0,
+                sizeBytes: 0,
+                createdAt: null,
+                source: "Academic Torrents",
+                sourceKind: text(item, "category") || "Research index",
+                contentType: inferContentType({ source: "Academic Torrents", sourceKind: text(item, "category"), name: text(item, "title") }),
+                url: text(item, "link") || text(item, "guid")
+              };
+            });
+        }
+      },
+      {
+        id: "distrowatch",
+        name: "DistroWatch",
+        kind: "Linux RSS",
+        direct: false,
+        enabled: false,
+        search: async (query, fetchUrl) => {
+          const xml = await fetchText(fetchUrl("https://distrowatch.com/news/torrents.xml"));
+          const doc = parseXml(xml);
+          const terms = queryTerms(query);
+          return [...doc.querySelectorAll("item")]
+            .filter((item) => matchesTerms(text(item, "title"), terms))
+            .map((item) => {
+              const torrentUrl = text(item, "link") || text(item, "guid");
+              return {
+                name: text(item, "title"),
+                infoHash: "",
+                seeders: 0,
+                leechers: 0,
+                sizeBytes: 0,
+                createdAt: text(item, "pubDate") ? new Date(text(item, "pubDate")) : null,
+                source: "DistroWatch",
+                sourceKind: "Linux torrent RSS",
+                contentType: "software",
+                torrentUrl,
+                url: torrentUrl
+              };
+            });
+        }
+      },
+      {
+        id: "internetarchive",
+        name: "Internet Archive",
+        kind: "JSON API",
+        direct: false,
+        enabled: true,
+        search: async (query, fetchUrl, contentType) => {
+          const archiveQuery = archiveSearchQuery(query, contentType);
+          const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(archiveQuery)}&fl[]=identifier&fl[]=title&fl[]=mediatype&rows=${MAX_RESULTS}&page=1&output=json`;
+          const json = await fetchJson(fetchUrl(url));
+          return (json.response?.docs || []).map((item) => {
+            const identifier = item.identifier || "";
+            return {
+              name: item.title || identifier,
+              infoHash: "",
+              seeders: 0,
+              leechers: 0,
+              sizeBytes: 0,
+              createdAt: null,
+              source: "Internet Archive",
+              sourceKind: item.mediatype || "Archive item",
+              contentType: inferContentType({ source: "Internet Archive", sourceKind: item.mediatype, name: item.title || identifier }),
+              torrentUrl: identifier ? `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(identifier)}_archive.torrent` : "",
+              url: identifier ? `https://archive.org/details/${encodeURIComponent(identifier)}` : ""
+            };
+          }).filter((item) => item.name && item.url);
+        },
+        top: async (contentType, fetchUrl) => {
+          const mediatype = archiveMediaType(contentType);
+          if (contentType && !mediatype) return [];
+          const query = mediatype ? `mediatype:${mediatype}` : "mediatype:(movies OR audio OR texts OR software)";
+          const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl[]=identifier&fl[]=title&fl[]=mediatype&rows=${MAX_RESULTS}&page=1&sort[]=downloads+desc&output=json`;
+          const json = await fetchJson(fetchUrl(url));
+          return (json.response?.docs || []).map((item) => {
+            const identifier = item.identifier || "";
+            return {
+              name: item.title || identifier,
+              infoHash: "",
+              seeders: 0,
+              leechers: 0,
+              sizeBytes: 0,
+              createdAt: null,
+              source: "Internet Archive",
+              sourceKind: item.mediatype || "Archive item",
+              contentType: inferContentType({ source: "Internet Archive", sourceKind: item.mediatype, name: item.title || identifier }),
+              torrentUrl: identifier ? `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(identifier)}_archive.torrent` : "",
+              url: identifier ? `https://archive.org/details/${encodeURIComponent(identifier)}` : ""
+            };
+          }).filter((item) => item.name && item.url);
+        }
+      },
+      {
+        id: "animetosho",
+        name: "AnimeTosho",
+        kind: "Torznab/RSS",
+        direct: false,
+        enabled: false,
+        search: async (query, fetchUrl, contentType) => {
+          if (contentType && contentType !== "anime") return [];
+          const url = `https://animetosho.org/feed/api?t=search&apikey=0&q=${encodeURIComponent(query)}`;
+          const xml = await fetchText(fetchUrl(url));
+          return parseTorznab(xml, "AnimeTosho");
+        }
+      },
+      {
+        id: "eztv",
+        name: "EZTV",
+        kind: "JSON API",
+        direct: false,
+        enabled: true,
+        search: async (query, fetchUrl, contentType) => {
+          if (contentType && contentType !== "tv") return [];
+          const pages = [1, 2];
+          const batches = await Promise.all(pages.map(async (page) => {
+            const url = `https://eztvx.to/api/get-torrents?limit=100&page=${page}`;
+            const json = await fetchJson(fetchUrl(url));
+            return json.torrents || [];
+          }));
+          const terms = queryTerms(query);
+          return batches.flat()
+            .filter((item) => matchesTerms(`${item.title || ""} ${item.filename || ""}`, terms))
+            .slice(0, MAX_RESULTS)
+            .map(normalizeEztvItem);
+        },
+        top: async (contentType, fetchUrl) => {
+          if (contentType && contentType !== "tv") return [];
+          const pages = [1, 2, 3];
+          const batches = await Promise.all(pages.map(async (page) => {
+            const url = `https://eztvx.to/api/get-torrents?limit=100&page=${page}`;
+            const json = await fetchJson(fetchUrl(url));
+            return json.torrents || [];
+          }));
+          return batches.flat().map(normalizeEztvItem);
+        }
+      },
+      {
+        id: "jackett",
+        name: "Jackett",
+        kind: "Torznab",
+        direct: false,
+        enabled: false,
+        requires: ["jackettUrl", "jackettKey"],
+        search: async (query, fetchUrl, contentType) => {
+          const url = torznabUrl(settings.jackettUrl, settings.jackettKey, query, contentType);
+          const xml = await fetchText(fetchUrl(url));
+          return parseTorznab(xml, "Jackett");
+        }
+      },
+      {
+        id: "prowlarr",
+        name: "Prowlarr",
+        kind: "JSON API",
+        direct: false,
+        enabled: false,
+        requires: ["prowlarrUrl", "prowlarrKey"],
+        search: async (query, fetchUrl, contentType, emit) => {
+          const categories = torznabCategories(contentType);
+          const selectedIndexers = prowlarrSelectedIndexers();
+          if (typeof emit !== "function") {
+            const url = prowlarrSearchUrl(query, categories, MAX_RESULTS, selectedIndexers.map((indexer) => indexer.id));
+            const json = await fetchJson(fetchUrl(url));
+            return (Array.isArray(json) ? json : []).map((item) => normalizeProwlarrItem(item));
+          }
+
+          let indexers = selectedIndexers;
+          if (!indexers.length) return [];
+
+          const perIndexerLimit = normalizeProwlarrLimit(settings.prowlarrLimit);
+          const batches = await Promise.all(indexers.map(async (indexer) => {
+            try {
+              const url = prowlarrSearchUrl(query, categories, perIndexerLimit, [indexer.id]);
+              const json = await fetchJson(fetchUrl(url));
+              const results = (Array.isArray(json) ? json : []).map((item) => normalizeProwlarrItem(item, indexer));
+              emit(results, indexer.name || `Indexer ${indexer.id}`);
+              return results;
+            } catch {
+              emit([], `${indexer.name || `Indexer ${indexer.id}`} failed`);
+              return [];
+            }
+          }));
+          return batches.flat();
+        },
+        top: async (contentType, fetchUrl, emit) => {
+          const categories = torznabCategories(contentType);
+          const indexers = prowlarrSelectedIndexers();
+          if (!indexers.length) return [];
+          const queries = prowlarrTopQueries(contentType);
+          const perQueryLimit = Math.max(20, Math.ceil(normalizeProwlarrLimit(settings.prowlarrLimit) / Math.max(queries.length, 1)));
+          const allResults = [];
+
+          await Promise.all(indexers.map(async (indexer) => {
+            let emitted = 0;
+            for (const query of queries) {
+              try {
+                const url = prowlarrSearchUrl(query, categories, perQueryLimit, [indexer.id]);
+                const json = await fetchJson(fetchUrl(url));
+                const results = (Array.isArray(json) ? json : []).map((item) => normalizeProwlarrItem(item, indexer));
+                allResults.push(...results);
+                emitted += results.length;
+                if (typeof emit === "function") {
+                  emit(results, `${indexer.name || `Indexer ${indexer.id}`} / ${query || contentTypeLabel(contentType)}`);
+                }
+              } catch {
+                if (typeof emit === "function") {
+                  emit([], `${indexer.name || `Indexer ${indexer.id}`} / ${query || contentTypeLabel(contentType)} failed`);
+                }
+              }
+            }
+            if (!emitted && typeof emit === "function") {
+              emit([], `${indexer.name || `Indexer ${indexer.id}`} returned no top results`);
+            }
+          }));
+
+          return allResults;
+        }
+      }
+    ];
+
+    const sampleResults = [
+      {
+        name: "Ubuntu 24.04.2 Desktop amd64 ISO",
+        infoHash: "3b245504cf5f11bbd7f908846a5f1b8ea6fd3dbf",
+        seeders: 824,
+        leechers: 34,
+        sizeBytes: 6207569920,
+        createdAt: new Date("2025-02-20T00:00:00Z"),
+        source: "Sample Linux Tracker",
+        sourceKind: "Sample",
+        url: "https://ubuntu.com/download"
+      },
+      {
+        name: "Ubuntu 24.04.2 Desktop amd64 ISO",
+        infoHash: "3b245504cf5f11bbd7f908846a5f1b8ea6fd3dbf",
+        seeders: 801,
+        leechers: 29,
+        sizeBytes: 6207569920,
+        createdAt: new Date("2025-02-20T00:00:00Z"),
+        source: "Sample Mirror Index",
+        sourceKind: "Sample",
+        url: "https://ubuntu.com/download"
+      },
+      {
+        name: "Debian 12.8.0 amd64 netinst",
+        infoHash: "5a0f5a0f5a0f5a0f5a0f5a0f5a0f5a0f5a0f5a0f",
+        seeders: 312,
+        leechers: 11,
+        sizeBytes: 661651456,
+        createdAt: new Date("2024-11-09T00:00:00Z"),
+        source: "Sample Distro Feed",
+        sourceKind: "Sample",
+        url: "https://www.debian.org/distrib/"
+      }
+    ];
+
+    const els = {
+      form: document.getElementById("searchForm"),
+      query: document.getElementById("query"),
+      sort: document.getElementById("sort"),
+      contentTypeSelect: document.getElementById("contentTypeSelect"),
+      minSeeders: document.getElementById("minSeeders"),
+      maxLeechers: document.getElementById("maxLeechers"),
+      minSize: document.getElementById("minSize"),
+      sortDirection: document.getElementById("sortDirection"),
+      filterSummary: document.getElementById("filterSummary"),
+      button: document.getElementById("searchButton"),
+      topButton: document.getElementById("topButton"),
+      results: document.getElementById("results"),
+      summary: document.getElementById("resultSummary"),
+      statusPills: document.getElementById("statusPills"),
+      providerStatus: document.getElementById("providerStatus"),
+      providerToggles: document.getElementById("providerToggles"),
+      proxyPreset: document.getElementById("proxyPreset"),
+      proxyTemplate: document.getElementById("proxyTemplate"),
+      trackerList: document.getElementById("trackerList"),
+      trackerRefreshButton: document.getElementById("trackerRefreshButton"),
+      trackerRefreshStatus: document.getElementById("trackerRefreshStatus"),
+      jackettUrl: document.getElementById("jackettUrl"),
+      jackettKey: document.getElementById("jackettKey"),
+      prowlarrUrl: document.getElementById("prowlarrUrl"),
+      prowlarrKey: document.getElementById("prowlarrKey"),
+      prowlarrLimit: document.getElementById("prowlarrLimit"),
+      qbUrl: document.getElementById("qbUrl"),
+      qbUsername: document.getElementById("qbUsername"),
+      qbPassword: document.getElementById("qbPassword"),
+      qbApiKey: document.getElementById("qbApiKey"),
+      qbPollSeconds: document.getElementById("qbPollSeconds"),
+      qbCategory: document.getElementById("qbCategory"),
+      qbSavePath: document.getElementById("qbSavePath"),
+      qbAddPaused: document.getElementById("qbAddPaused"),
+      qbSequential: document.getElementById("qbSequential"),
+      qbFirstLastPiece: document.getElementById("qbFirstLastPiece"),
+      slowMonitorEnabled: document.getElementById("slowMonitorEnabled"),
+      slowMonitorCheckMinutes: document.getElementById("slowMonitorCheckMinutes"),
+      slowMonitorMinKibPerSecond: document.getElementById("slowMonitorMinKibPerSecond"),
+      slowMonitorSlowMinutes: document.getElementById("slowMonitorSlowMinutes"),
+      slowMonitorCooldownMinutes: document.getElementById("slowMonitorCooldownMinutes"),
+      slowMonitorIgnoreProgressPercent: document.getElementById("slowMonitorIgnoreProgressPercent"),
+      slowMonitorIgnorePaused: document.getElementById("slowMonitorIgnorePaused"),
+      slowMonitorAddTrackers: document.getElementById("slowMonitorAddTrackers"),
+      slowMonitorSearchAlternatives: document.getElementById("slowMonitorSearchAlternatives"),
+      slowMonitorStatus: document.getElementById("slowMonitorStatus"),
+      qbTestButton: document.getElementById("qbTestButton"),
+      qbTestStatus: document.getElementById("qbTestStatus"),
+      qbPanel: document.getElementById("qbPanel"),
+      qbSummary: document.getElementById("qbSummary"),
+      qbStatus: document.getElementById("qbStatus"),
+      qbTorrentList: document.getElementById("qbTorrentList"),
+      qbRefreshButton: document.getElementById("qbRefreshButton"),
+      qbStartButton: document.getElementById("qbStartButton"),
+      qbStopButton: document.getElementById("qbStopButton"),
+      qbForceButton: document.getElementById("qbForceButton"),
+      qbReannounceButton: document.getElementById("qbReannounceButton"),
+      qbRecheckButton: document.getElementById("qbRecheckButton"),
+      qbDeleteButton: document.getElementById("qbDeleteButton"),
+      qbAddModal: document.getElementById("qbAddModal"),
+      qbAddName: document.getElementById("qbAddName"),
+      qbAddCategory: document.getElementById("qbAddCategory"),
+      qbAddCustomCategory: document.getElementById("qbAddCustomCategory"),
+      qbAddCancelButton: document.getElementById("qbAddCancelButton"),
+      qbAddConfirmButton: document.getElementById("qbAddConfirmButton"),
+      resultDetailModal: document.getElementById("resultDetailModal"),
+      resultDetailTitle: document.getElementById("resultDetailTitle"),
+      resultDetailBody: document.getElementById("resultDetailBody"),
+      resultDetailCloseButton: document.getElementById("resultDetailCloseButton"),
+      qbDetailModal: document.getElementById("qbDetailModal"),
+      qbDetailTitle: document.getElementById("qbDetailTitle"),
+      qbDetailBody: document.getElementById("qbDetailBody"),
+      qbDetailCloseButton: document.getElementById("qbDetailCloseButton"),
+      pager: document.getElementById("pager"),
+      pageLabel: document.getElementById("pageLabel"),
+      prevPageButton: document.getElementById("prevPageButton"),
+      nextPageButton: document.getElementById("nextPageButton"),
+      toast: document.getElementById("toast"),
+      runtimeWarning: document.getElementById("runtimeWarning"),
+      runtimeWarningTitle: document.getElementById("runtimeWarningTitle"),
+      runtimeWarningText: document.getElementById("runtimeWarningText"),
+      useLocalProxyButton: document.getElementById("useLocalProxyButton"),
+      csvOnlyModeButton: document.getElementById("csvOnlyModeButton"),
+      backendModeButton: document.getElementById("backendModeButton")
+    };
+
+    let settings = loadSettings();
+    let backendSaveTimer = null;
+    let qbPollTimer = null;
+    let providerLookupRunId = 0;
+    let activeProviderLookupController = null;
+    let activeProviderLookupKind = "";
+    let qbSelectedHashes = new Set();
+    let qbDetailCache = new Map();
+    let qbTorrentsByHash = new Map();
+    let qbFailureCount = 0;
+    let pendingQbAdd = null;
+    let rawResults = [];
+    let currentPage = 1;
+    let activeSearchQuery = "";
+    let prowlarrIndexers = [];
+    let prowlarrIndexersLoading = false;
+    let prowlarrIndexersError = "";
+    let providerState = new Map(providers.map((provider) => [provider.id, {
+      status: provider.direct ? "ready" : "needs proxy",
+      count: 0,
+      detail: provider.direct ? "Direct browser fetch" : "Set a proxy to enable"
+    }]));
+
+    init();
+
+    async function init() {
+      await hydrateBackendSettings();
+      renderProxyPresets();
+      renderContentTypeOptions();
+      els.sort.value = settings.sort;
+      els.contentTypeSelect.value = settings.contentType || "";
+      els.minSeeders.value = settings.minSeeders || "";
+      els.maxLeechers.value = settings.maxLeechers || "";
+      els.minSize.value = formatGigabytesInput(settings.minSize);
+      els.sortDirection.value = settings.sortDirection;
+      els.proxyTemplate.value = settings.proxyTemplate;
+      els.proxyPreset.value = inferProxyPreset(settings.proxyTemplate);
+      els.trackerList.value = settings.trackers.join(", ");
+      els.jackettUrl.value = settings.jackettUrl;
+      els.jackettKey.value = settings.jackettKey;
+      els.prowlarrUrl.value = settings.prowlarrUrl;
+      els.prowlarrKey.value = settings.prowlarrKey;
+      els.prowlarrLimit.value = String(settings.prowlarrLimit || DEFAULT_PROWLARR_LIMIT);
+      els.qbUrl.value = settings.qbUrl;
+      els.qbUsername.value = settings.qbUsername;
+      els.qbPassword.value = settings.qbPassword;
+      els.qbApiKey.value = settings.qbApiKey;
+      els.qbPollSeconds.value = String(settings.qbPollSeconds || 5);
+      els.qbCategory.value = settings.qbCategory;
+      els.qbSavePath.value = settings.qbSavePath;
+      els.qbAddPaused.checked = Boolean(settings.qbAddPaused);
+      els.qbSequential.checked = Boolean(settings.qbSequential);
+      els.qbFirstLastPiece.checked = Boolean(settings.qbFirstLastPiece);
+      els.slowMonitorEnabled.checked = Boolean(settings.slowMonitorEnabled);
+      els.slowMonitorCheckMinutes.value = String(settings.slowMonitorCheckMinutes || 5);
+      els.slowMonitorMinKibPerSecond.value = String(Math.round((settings.slowMonitorMinBytesPerSecond || 512 * 1024) / 1024));
+      els.slowMonitorSlowMinutes.value = String(settings.slowMonitorSlowMinutes || 10);
+      els.slowMonitorCooldownMinutes.value = String(settings.slowMonitorCooldownMinutes || 60);
+      els.slowMonitorIgnoreProgressPercent.value = String(Math.round((settings.slowMonitorIgnoreProgress || 0.95) * 100));
+      els.slowMonitorIgnorePaused.checked = settings.slowMonitorIgnorePaused !== false;
+      els.slowMonitorAddTrackers.checked = Boolean(settings.slowMonitorAddTrackers);
+      els.slowMonitorSearchAlternatives.checked = Boolean(settings.slowMonitorSearchAlternatives);
+      syncProviderAvailability();
+      renderModeSwitch();
+      renderRuntimeWarning();
+      renderProviderToggles();
+      renderProviderStatus();
+      renderStatusPills();
+      refreshProwlarrIndexers();
+      renderPresetButtons();
+      renderFilterSummary();
+      renderEmpty("Search public torrent indexes, then copy or open magnet links for your downloader.");
+      updatePager(0);
+      els.form.addEventListener("submit", handleSearch);
+      els.topButton.addEventListener("click", handleTopTorrents);
+      els.sort.addEventListener("change", () => {
+        saveResultFilterSettings();
+      });
+      els.contentTypeSelect.addEventListener("change", saveResultFilterSettings);
+      els.minSeeders.addEventListener("input", saveResultFilterSettings);
+      els.maxLeechers.addEventListener("input", saveResultFilterSettings);
+      els.minSize.addEventListener("input", saveResultFilterSettings);
+      els.sortDirection.addEventListener("change", saveResultFilterSettings);
+      document.querySelectorAll("[data-preset-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = els[button.dataset.presetTarget];
+          if (!target) return;
+          target.value = button.dataset.presetValue;
+          saveResultFilterSettings();
+        });
+      });
+      els.prevPageButton.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage -= 1;
+          renderResults(rawResults);
+        }
+      });
+      els.nextPageButton.addEventListener("click", () => {
+      const totalPages = Math.max(1, Math.ceil(applyResultFilters(rawResults).length / PAGE_SIZE));
+        if (currentPage < totalPages) {
+          currentPage += 1;
+          renderResults(rawResults);
+        }
+      });
+      els.proxyPreset.addEventListener("change", () => {
+        const preset = CORS_PROXY_PRESETS.find((item) => item.id === els.proxyPreset.value);
+        const template = preset ? preset.template() : "";
+        if (template) {
+          els.proxyTemplate.value = template;
+          saveSettingsFromInputs();
+        }
+      });
+      els.proxyTemplate.addEventListener("change", saveSettingsFromInputs);
+      els.useLocalProxyButton.addEventListener("click", () => {
+        switchMode("backend");
+      });
+      els.csvOnlyModeButton.addEventListener("click", () => switchMode("csvOnly"));
+      els.backendModeButton.addEventListener("click", () => switchMode("backend"));
+      els.trackerList.addEventListener("change", saveSettingsFromInputs);
+      els.trackerRefreshButton.addEventListener("click", refreshTrackersFromNgosang);
+      els.jackettUrl.addEventListener("change", saveSettingsFromInputs);
+      els.jackettKey.addEventListener("change", saveSettingsFromInputs);
+      els.prowlarrUrl.addEventListener("change", () => {
+        saveSettingsFromInputs();
+        refreshProwlarrIndexers();
+      });
+      els.prowlarrKey.addEventListener("change", () => {
+        saveSettingsFromInputs();
+        refreshProwlarrIndexers();
+      });
+      els.prowlarrLimit.addEventListener("change", saveSettingsFromInputs);
+      [
+        els.qbUrl,
+        els.qbUsername,
+        els.qbPassword,
+        els.qbApiKey,
+        els.qbPollSeconds,
+        els.qbCategory,
+        els.qbSavePath,
+        els.qbAddPaused,
+        els.qbSequential,
+        els.qbFirstLastPiece,
+        els.slowMonitorEnabled,
+        els.slowMonitorCheckMinutes,
+        els.slowMonitorMinKibPerSecond,
+        els.slowMonitorSlowMinutes,
+        els.slowMonitorCooldownMinutes,
+        els.slowMonitorIgnoreProgressPercent,
+        els.slowMonitorIgnorePaused,
+        els.slowMonitorAddTrackers,
+        els.slowMonitorSearchAlternatives
+      ].forEach((input) => input.addEventListener("change", () => {
+        saveSettingsFromInputs();
+        scheduleQbPolling();
+      }));
+      els.qbTestButton.addEventListener("click", testQbConnection);
+      els.qbRefreshButton.addEventListener("click", () => fetchQbTorrents(true));
+      els.qbStartButton.addEventListener("click", () => runSelectedQbAction("start"));
+      els.qbStopButton.addEventListener("click", () => runSelectedQbAction("stop"));
+      els.qbForceButton.addEventListener("click", () => runSelectedQbAction("forceStart"));
+      els.qbReannounceButton.addEventListener("click", () => runSelectedQbAction("reannounce"));
+      els.qbRecheckButton.addEventListener("click", () => runSelectedQbAction("recheck"));
+      els.qbDeleteButton.addEventListener("click", () => runSelectedQbAction("delete"));
+      els.qbAddCancelButton.addEventListener("click", closeQbAddDialog);
+      els.qbAddConfirmButton.addEventListener("click", confirmQbAddDialog);
+      els.qbAddModal.addEventListener("click", (event) => {
+        if (event.target === els.qbAddModal) closeQbAddDialog();
+      });
+      els.resultDetailCloseButton.addEventListener("click", closeResultDetailModal);
+      els.resultDetailModal.addEventListener("click", (event) => {
+        if (event.target === els.resultDetailModal) closeResultDetailModal();
+      });
+      els.qbDetailCloseButton.addEventListener("click", closeQbDetailModal);
+      els.qbDetailModal.addEventListener("click", (event) => {
+        if (event.target === els.qbDetailModal) closeQbDetailModal();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (els.resultDetailModal.classList.contains("show")) closeResultDetailModal();
+        if (els.qbDetailModal.classList.contains("show")) closeQbDetailModal();
+        if (els.qbAddModal.classList.contains("show")) closeQbAddDialog();
+      });
+      els.qbAddCategory.addEventListener("change", () => {
+        if (els.qbAddCategory.value && !els.qbAddCategory.value.startsWith("__")) {
+          els.qbAddCustomCategory.value = els.qbAddCategory.value;
+        }
+      });
+      renderQbEmpty();
+      scheduleQbPolling();
+    }
+
+    async function handleSearch(event) {
+      event.preventDefault();
+      if (activeProviderLookupKind === "search") {
+        stopProviderLookup();
+        return;
+      }
+      const query = els.query.value.trim();
+      if (!query) return;
+      activeSearchQuery = query;
+      const contentType = settings.contentType || "";
+      await runProviderLookup({
+        kind: "search",
+        label: "Searching",
+        emptyMessage: "Searching enabled providers...",
+        providerCall: (provider, fetchUrl, emit) => provider.search(query, fetchUrl, contentType, emit),
+        canUseProvider: (provider) => typeof provider.search === "function",
+        resultFilter: (item) => isRelevantSearchResult(item, query),
+        summaryPrefix: (successCount, searchableCount) => `${successCount}/${searchableCount} searchable provider${searchableCount === 1 ? "" : "s"} returned data.`
+      });
+    }
+
+    async function handleTopTorrents() {
+      if (activeProviderLookupKind === "top") {
+        stopProviderLookup();
+        return;
+      }
+      activeSearchQuery = "";
+      const contentType = settings.contentType || "";
+      await runProviderLookup({
+        kind: "top",
+        label: "Loading top",
+        emptyMessage: contentType ? `Loading top ${contentTypeLabel(contentType).toLowerCase()} torrents...` : "Loading top torrents...",
+        providerCall: (provider, fetchUrl, emit) => provider.top(contentType, fetchUrl, emit),
+        canUseProvider: (provider) => typeof provider.top === "function",
+        summaryPrefix: (successCount, searchableCount) => `${successCount}/${searchableCount} top-capable provider${searchableCount === 1 ? "" : "s"} returned data.`
+      });
+    }
+
+    async function runProviderLookup({ kind, label, emptyMessage, providerCall, canUseProvider, resultFilter = null, summaryPrefix }) {
+      stopProviderLookup(false);
+      const runId = ++providerLookupRunId;
+      activeProviderLookupController = new AbortController();
+      activeProviderLookupKind = kind;
+      saveSettingsFromInputs();
+      renderRuntimeWarning();
+      setLookupButtonState(kind);
+      renderEmpty(emptyMessage);
+      setSummary(0, 0, `${label}...`);
+
+      const enabled = providers.filter((provider) => isProviderEnabled(provider));
+      const proxy = settings.proxyTemplate.trim();
+      const fetchUrl = (url, provider) => {
+        if (provider.direct) return url;
+        if (!proxy) throw new Error("This provider needs a CORS proxy in Settings.");
+        return proxy.replace("{url}", encodeURIComponent(url));
+      };
+
+      const searchable = [];
+      for (const provider of enabled) {
+        const blocker = providerBlocker(provider);
+        if (blocker) {
+          updateProvider(provider.id, blocker.status, 0, blocker.detail);
+        } else if (!canUseProvider(provider)) {
+          updateProvider(provider.id, "disabled", 0, "Not available for this action");
+        } else {
+          searchable.push(provider);
+        }
+      }
+
+      const skippedCount = enabled.length - searchable.length;
+      const skipNote = skippedCount ? ` ${skippedCount} enabled provider${skippedCount === 1 ? "" : "s"} skipped for missing setup.` : "";
+      const proxyNote = publicProxyInUse() ? " Public CORS proxies often time out or block tracker domains; use the local proxy for reliable multi-provider results." : "";
+      const flat = [];
+      let completedCount = 0;
+      let successCount = 0;
+
+      const publishProgress = (finished = false) => {
+        if (runId !== providerLookupRunId) return;
+        const mergedResults = mergeResults(flat);
+        rawResults = mergedResults.slice(0, MAX_RESULTS);
+        currentPage = 1;
+        if (rawResults.length) {
+          renderResults(rawResults);
+        } else {
+          updatePager(0);
+          const waitingMessage = searchable.length
+            ? `${completedCount}/${searchable.length} provider${searchable.length === 1 ? "" : "s"} finished. Waiting for matches...`
+            : "No searchable providers are available.";
+          renderEmpty(finished ? "No results yet. Try a broader query or enable providers in Settings." : waitingMessage);
+        }
+        const capNote = mergedResults.length > MAX_RESULTS ? ` Showing first ${MAX_RESULTS} unified results.` : "";
+        const progressNote = finished
+          ? summaryPrefix(successCount, searchable.length)
+          : `${completedCount}/${searchable.length} provider${searchable.length === 1 ? "" : "s"} finished. ${successCount} returned data.`;
+        setSummary(rawResults.length, flat.length, `${progressNote}${skipNote}${capNote}${finished ? proxyNote : ""}${filterSummary()}`);
+      };
+
+      publishProgress(false);
+
+      await Promise.all(searchable.map(async (provider) => {
+        let emittedForProvider = false;
+        let providerRawCount = 0;
+        let providerFilteredCount = 0;
+        const emitProviderResults = (results, detail = "") => {
+          if (runId !== providerLookupRunId) return;
+          const resultList = Array.isArray(results) ? results : [];
+          const filteredResults = resultFilter ? resultList.filter(resultFilter) : resultList;
+          emittedForProvider = true;
+          providerRawCount += resultList.length;
+          providerFilteredCount += filteredResults.length;
+          flat.push(...filteredResults);
+          const filteredNote = resultFilter && providerFilteredCount !== providerRawCount ? `, ${providerFilteredCount} title match${providerFilteredCount === 1 ? "" : "es"}` : "";
+          const detailPrefix = detail ? `${detail}: ` : "";
+          updateProvider(provider.id, "searching", providerFilteredCount, `${detailPrefix}${providerRawCount} result${providerRawCount === 1 ? "" : "s"}${filteredNote}`);
+          publishProgress(false);
+        };
+        try {
+          updateProvider(provider.id, "searching", 0, label);
+          const results = await providerCall(provider, (url) => fetchUrl(url, provider), emitProviderResults);
+          if (runId !== providerLookupRunId) return;
+          const resultList = Array.isArray(results) ? results : [];
+          if (!emittedForProvider) {
+            const filteredResults = resultFilter ? resultList.filter(resultFilter) : resultList;
+            providerRawCount = resultList.length;
+            providerFilteredCount = filteredResults.length;
+            flat.push(...filteredResults);
+          }
+          const filteredNote = resultFilter && providerFilteredCount !== providerRawCount ? `, ${providerFilteredCount} title match${providerFilteredCount === 1 ? "" : "es"}` : "";
+          updateProvider(provider.id, "ready", providerFilteredCount, `${providerRawCount} result${providerRawCount === 1 ? "" : "s"}${filteredNote}`);
+          successCount += 1;
+        } catch (error) {
+          if (runId !== providerLookupRunId) return;
+          updateProvider(provider.id, "error", 0, error.message);
+        } finally {
+          if (runId !== providerLookupRunId) return;
+          completedCount += 1;
+          publishProgress(false);
+        }
+      }));
+
+      if (runId !== providerLookupRunId) return;
+      publishProgress(true);
+      clearProviderLookupState();
+    }
+
+    function setLookupButtonState(kind) {
+      if (kind === "search") {
+        els.button.disabled = false;
+        els.button.textContent = "Stop";
+        els.topButton.disabled = true;
+        els.topButton.textContent = "Top torrents";
+        return;
+      }
+      if (kind === "top") {
+        els.button.disabled = true;
+        els.button.textContent = "Search";
+        els.topButton.disabled = false;
+        els.topButton.textContent = "Stop";
+        return;
+      }
+      els.button.disabled = false;
+      els.topButton.disabled = false;
+      els.button.textContent = "Search";
+      els.topButton.textContent = "Top torrents";
+    }
+
+    function stopProviderLookup(showToast = true) {
+      if (!activeProviderLookupController) return;
+      const stoppedKind = activeProviderLookupKind;
+      activeProviderLookupController.abort();
+      providerLookupRunId += 1;
+      clearProviderLookupState();
+      if (showToast) {
+        const label = stoppedKind === "top" ? "Top torrents" : "Search";
+        toast(`${label} stopped.`);
+        setSummary(rawResults.length, rawResults.length, `${label} stopped. Showing results received so far.${filterSummary()}`);
+      }
+    }
+
+    function clearProviderLookupState() {
+      activeProviderLookupController = null;
+      activeProviderLookupKind = "";
+      els.button.disabled = false;
+      els.topButton.disabled = false;
+      els.button.textContent = "Search";
+      els.topButton.textContent = "Top torrents";
+    }
+
+    function mergeResults(items) {
+      const map = new Map();
+      for (const item of items) {
+        const key = item.infoHash ? item.infoHash.toLowerCase() : normalizeName(item.name);
+        if (!key) continue;
+        const current = map.get(key);
+        const magnet = item.magnet || buildMagnet(item.infoHash, item.name);
+        if (!current) {
+          const contentType = item.contentType || inferContentType(item);
+          map.set(key, {
+            ...item,
+            contentType,
+            magnet,
+            contentTypes: contentType ? [contentType] : [],
+            sources: [{ name: item.source, kind: item.sourceKind, seeders: item.seeders, leechers: item.leechers, url: item.url, contentType }],
+            sourceCount: 1
+          });
+          continue;
+        }
+        const contentType = item.contentType || inferContentType(item);
+        current.seeders = Math.max(current.seeders || 0, item.seeders || 0);
+        current.leechers = Math.max(current.leechers || 0, item.leechers || 0);
+        current.sizeBytes = current.sizeBytes || item.sizeBytes;
+        current.createdAt = current.createdAt || item.createdAt;
+        current.magnet = current.magnet || magnet;
+        current.resolveUrl = current.resolveUrl || item.resolveUrl;
+        if (contentType && !current.contentTypes.includes(contentType)) current.contentTypes.push(contentType);
+        if (!current.contentType && contentType) current.contentType = contentType;
+        if (!current.sources.some((source) => source.name === item.source)) {
+          current.sources.push({ name: item.source, kind: item.sourceKind, seeders: item.seeders, leechers: item.leechers, url: item.url, contentType });
+        }
+        current.sourceCount = current.sources.length;
+      }
+      return [...map.values()];
+    }
+
+    function renderResults(items) {
+      const filtered = applyResultFilters(items);
+      const sorted = filtered.sort(sorter(settings.sort, settings.sortDirection));
+      if (!sorted.length) {
+        updatePager(0);
+        renderEmpty(items.length ? "No results match the current filters." : "No results yet. Try a broader query or enable providers in Settings.");
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+      currentPage = Math.min(Math.max(1, currentPage), totalPages);
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageItems = sorted.slice(start, start + PAGE_SIZE);
+      els.results.innerHTML = pageItems.map(resultTemplate).join("");
+      updatePager(sorted.length);
+      els.results.querySelectorAll("[data-result-key]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = rawResults.find((result) => resultKey(result) === button.dataset.resultKey);
+          if (item) openResultDetailModal(item);
+        });
+      });
+    }
+
+    function applyResultFilters(items) {
+      const minSeeders = toNumber(settings.minSeeders);
+      const maxLeechers = settings.maxLeechers === "" ? null : toNumber(settings.maxLeechers);
+      const minSize = toNumber(settings.minSize);
+      const contentType = settings.contentType || "";
+      return items.filter((item) => {
+        if (contentType && !resultHasContentType(item, contentType)) return false;
+        if ((item.seeders || 0) < minSeeders) return false;
+        if (maxLeechers !== null && (item.leechers || 0) > maxLeechers) return false;
+        if (minSize && (!item.sizeBytes || item.sizeBytes < minSize)) return false;
+        return true;
+      });
+    }
+
+    function filterSummary() {
+      const filteredCount = applyResultFilters(rawResults).length;
+      const hiddenCount = Math.max(0, rawResults.length - filteredCount);
+      if (!rawResults.length) return "";
+      return hiddenCount ? ` ${hiddenCount} hidden by filters.` : " No active result filters hiding matches.";
+    }
+
+    function updatePager(totalResults) {
+      const totalPages = Math.max(1, Math.ceil(totalResults / PAGE_SIZE));
+      const showPager = totalResults > PAGE_SIZE;
+      els.pager.classList.toggle("show", showPager);
+      els.pageLabel.textContent = `Page ${currentPage} / ${totalPages}`;
+      els.prevPageButton.disabled = currentPage <= 1;
+      els.nextPageButton.disabled = currentPage >= totalPages;
+    }
+
+    function resultTemplate(item) {
+      const key = resultKey(item);
+      return `
+        <div class="result-card">
+          <button class="result-summary" type="button" data-result-key="${escapeHtml(key)}">
+            <h3 class="title">${escapeHtml(item.name || "Unnamed torrent")}</h3>
+            <span class="expand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg>
+            </span>
+          </button>
+        </div>
+      `;
+    }
+
+    function resultKey(item) {
+      return item.infoHash ? item.infoHash.toLowerCase() : normalizeName(item.name);
+    }
+
+    function openResultDetailModal(item) {
+      els.resultDetailTitle.textContent = item.name || "Unnamed torrent";
+      els.resultDetailBody.innerHTML = resultDetailTemplate(item);
+      bindResultDetailActions(els.resultDetailBody);
+      sanitizeResultLinks(els.resultDetailBody);
+      els.resultDetailModal.classList.add("show");
+    }
+
+    function closeResultDetailModal() {
+      els.resultDetailModal.classList.remove("show");
+      els.resultDetailBody.innerHTML = "";
+    }
+
+    function resultDetailTemplate(item) {
+      const sourceLabel = item.sourceCount === 1 ? item.sources[0].name : `${item.sourceCount} sources`;
+      const sourceTags = item.sources.map((source) => `<span class="source-tag">${escapeHtml(source.name)} - ${source.seeders || 0} S / ${source.leechers || 0} L</span>`).join("");
+      const rawFallbackLink = item.torrentUrl || item.url || "";
+      const fallbackResolveUrl = isProwlarrDownloadUrl(rawFallbackLink) ? rawFallbackLink : "";
+      const safeFallbackLink = fallbackResolveUrl ? "" : rawFallbackLink;
+      const resolverSource = item.resolveUrl || fallbackResolveUrl;
+      const resolveTarget = resolverSource ? magnetResolverUrl(resolverSource, item.name) : "";
+      const copyTarget = item.magnet || safeFallbackLink || "";
+      const copyLabel = item.magnet || resolverSource ? "Copy magnet" : "Copy link";
+      const openTarget = item.magnet || resolveTarget || safeFallbackLink || "#";
+      const openLabel = item.magnet || resolverSource ? "Open magnet" : "Open link";
+      const qbTarget = item.magnet || resolveTarget || safeFallbackLink || "";
+      const copyEncoded = encodeURIComponent(copyTarget);
+      const resolveEncoded = encodeURIComponent(resolveTarget);
+      const qbEncoded = encodeURIComponent(qbTarget);
+      return `
+          <div class="result-details">
+            <div class="meta">
+              <span class="stat"><strong>${formatNumber(item.seeders)}</strong> seeders</span>
+              <span class="stat"><strong>${formatNumber(item.leechers)}</strong> leechers</span>
+              <span class="stat"><strong>${formatBytes(item.sizeBytes)}</strong></span>
+              <span class="stat"><strong>${escapeHtml(contentTypeLabel(item.contentType || "other"))}</strong></span>
+              <span class="stat"><strong>${escapeHtml(sourceLabel)}</strong></span>
+              ${item.createdAt instanceof Date && !Number.isNaN(item.createdAt.valueOf()) ? `<span class="stat">${item.createdAt.toLocaleDateString()}</span>` : ""}
+            </div>
+            <div class="sources">${sourceTags}</div>
+            <div class="actions">
+              ${copyTarget || resolveTarget ? `<button class="action accent" type="button" data-copy="${copyEncoded}" ${resolveTarget ? `data-resolve-copy="${resolveEncoded}"` : ""} data-copy-message="${item.magnet || resolverSource ? "Magnet link copied." : "Link copied."}" title="${escapeHtml(copyLabel)}" aria-label="${escapeHtml(copyLabel)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>` : ""}
+              <a class="action" href="${escapeHtml(openTarget)}" title="${escapeHtml(openLabel)}" aria-label="${escapeHtml(openLabel)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </a>
+              ${qbTarget ? `<button class="action qb-send" type="button" data-qb-add="${qbEncoded}" title="Send to qBittorrent" aria-label="Send to qBittorrent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+            </button>` : ""}
+              ${item.url && item.url !== openTarget && !isProwlarrDownloadUrl(item.url) ? `<a class="action" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" title="Source" aria-label="Source">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg>
+            </a>` : ""}
+          </div>
+          </div>
+      `;
+    }
+
+    function bindResultDetailActions(root) {
+      root.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const rawCopy = decodeURIComponent(button.dataset.copy || "");
+          const title = els.resultDetailTitle.textContent || "";
+          const value = button.dataset.resolveCopy
+            ? await resolveMagnet(decodeURIComponent(button.dataset.resolveCopy))
+            : isProwlarrDownloadUrl(rawCopy)
+              ? await resolveMagnet(magnetResolverUrl(rawCopy, title))
+              : rawCopy;
+          await copyText(value);
+          toast(button.dataset.copyMessage || "Link copied.");
+        });
+      });
+      root.querySelectorAll("[data-qb-add]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const raw = decodeURIComponent(button.dataset.qbAdd || "");
+          const title = els.resultDetailTitle.textContent || "";
+          await openQbAddDialog(raw, title);
+        });
+      });
+    }
+
+    function sanitizeResultLinks(root = document) {
+      root.querySelectorAll("a[href]").forEach((anchor) => {
+        if (!isProwlarrDownloadUrl(anchor.href)) return;
+        const title = anchor.closest(".dialog")?.querySelector("h2")?.textContent || "";
+        anchor.href = magnetResolverUrl(anchor.href, title);
+        anchor.title = "Open magnet";
+        anchor.setAttribute("aria-label", "Open magnet");
+        anchor.removeAttribute("target");
+        anchor.removeAttribute("rel");
+      });
+    }
+
+    function qBConfigured() {
+      return Boolean(settings.qbUrl && (settings.qbApiKey || settings.qbUsername));
+    }
+
+    function scheduleQbPolling() {
+      clearInterval(qbPollTimer);
+      if (!qBConfigured()) {
+        renderQbEmpty();
+        return;
+      }
+      qbFailureCount = 0;
+      persistBackendSettingsNow().finally(() => fetchQbTorrents(false));
+      qbPollTimer = setInterval(() => fetchQbTorrents(false), Math.max(2, Number(settings.qbPollSeconds) || 5) * 1000);
+    }
+
+    async function testQbConnection() {
+      saveSettingsFromInputs();
+      els.qbTestButton.disabled = true;
+      els.qbTestStatus.textContent = "Testing...";
+      try {
+        await persistBackendSettingsNow();
+        const json = await postJson("/qb/test", {});
+        els.qbTestStatus.textContent = `Connected ${json.version || ""}`.trim();
+        qbFailureCount = 0;
+        scheduleQbPolling();
+        toast("qBittorrent connected.");
+        await fetchQbTorrents(true);
+      } catch (error) {
+        els.qbTestStatus.textContent = await qbDiagnosticMessage(error.message);
+        toast(`qBittorrent test failed: ${error.message}`);
+      } finally {
+        els.qbTestButton.disabled = false;
+      }
+    }
+
+    async function qbDiagnosticMessage(fallback) {
+      try {
+        const embedded = parseJsonError(fallback);
+        if (embedded?.diagnostics) return formatQbDiagnostics(embedded.diagnostics, embedded.error || fallback);
+        const diagnostic = await postJson("/qb/diagnostics", {});
+        return formatQbDiagnostics(diagnostic, fallback);
+      } catch {
+        return fallback;
+      }
+    }
+
+    function formatQbDiagnostics(diagnostic, fallback) {
+      const lines = (diagnostic.results || []).map((item) => {
+        const login = item.authMode === "api-key"
+          ? "auth API key"
+          : item.login
+            ? `login ${item.login.status}${item.login.hasSidCookie ? " SID" : " no SID"}`
+            : "login n/a";
+        const withHeaders = item.appVersionWithHeaders
+          ? `headers ${item.appVersionWithHeaders.status || item.appVersionWithHeaders.error}`
+          : "headers n/a";
+        const withoutHeaders = item.appVersionWithoutHeaders
+          ? `plain ${item.appVersionWithoutHeaders.status || item.appVersionWithoutHeaders.error}`
+          : "plain n/a";
+        return `${item.base}: ${login}, ${withHeaders}, ${withoutHeaders}`;
+      });
+      return lines.length ? lines.join(" | ") : fallback;
+    }
+
+    function parseJsonError(message) {
+      try {
+        return JSON.parse(message);
+      } catch {
+        return null;
+      }
+    }
+
+    async function openQbAddDialog(rawTarget, title) {
+      saveSettingsFromInputs();
+      if (!qBConfigured()) {
+        toast("Configure qBittorrent in Settings first.");
+        return;
+      }
+
+      pendingQbAdd = { rawTarget, title, metadata: resultMetadataForTitle(title) };
+      els.qbAddName.textContent = title || "Selected torrent";
+      els.qbAddCustomCategory.value = settings.qbCategory || "";
+      els.qbAddCategory.innerHTML = `<option value="__loading">Loading categories...</option>`;
+      els.qbAddModal.classList.add("show");
+      els.qbAddConfirmButton.disabled = false;
+      els.qbAddCustomCategory.focus();
+
+      try {
+        await persistBackendSettingsNow();
+        const categories = await fetchQbCategories();
+        renderQbAddCategories(categories);
+      } catch (error) {
+        renderQbAddCategories([]);
+        toast(`Could not load qBittorrent categories: ${error.message}`);
+      }
+    }
+
+    function closeQbAddDialog() {
+      pendingQbAdd = null;
+      els.qbAddModal.classList.remove("show");
+    }
+
+    async function confirmQbAddDialog() {
+      if (!pendingQbAdd) return;
+      const selected = els.qbAddCategory.value;
+      const typed = els.qbAddCustomCategory.value.trim();
+      const category = typed || (selected && !selected.startsWith("__") ? selected : "");
+      const { rawTarget, title, metadata } = pendingQbAdd;
+      els.qbAddConfirmButton.disabled = true;
+
+      try {
+        rememberQbCategory(category);
+        await addTorrentToQb(rawTarget, title, category, metadata);
+        closeQbAddDialog();
+      } catch {
+        // addTorrentToQb already reports the specific failure.
+      } finally {
+        els.qbAddConfirmButton.disabled = false;
+      }
+    }
+
+    async function fetchQbCategories() {
+      const json = await fetchJson(`${location.origin}/qb/categories`);
+      return Object.keys(json || {}).sort((a, b) => a.localeCompare(b));
+    }
+
+    function renderQbAddCategories(categories) {
+      const recent = Array.isArray(settings.qbRecentCategories) ? settings.qbRecentCategories : [];
+      const options = [
+        { value: "__default", label: settings.qbCategory ? `Default (${settings.qbCategory})` : "No category" },
+        ...recent.map((category) => ({ value: category, label: `Recent: ${category}` })),
+        ...categories
+          .filter((category) => !recent.includes(category))
+          .map((category) => ({ value: category, label: category }))
+      ];
+      els.qbAddCategory.innerHTML = options.map((option) =>
+        `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`
+      ).join("");
+      if (settings.qbCategory && options.some((option) => option.value === settings.qbCategory)) {
+        els.qbAddCategory.value = settings.qbCategory;
+      }
+    }
+
+    function rememberQbCategory(category) {
+      if (!category) return;
+      const recent = Array.isArray(settings.qbRecentCategories) ? settings.qbRecentCategories : [];
+      settings.qbRecentCategories = [category, ...recent.filter((item) => item !== category)].slice(0, 8);
+      persistSettings();
+    }
+
+    async function addTorrentToQb(rawTarget, title, category = "", metadata = {}) {
+      try {
+        await persistBackendSettingsNow();
+        const urls = rawTarget.startsWith("/magnet") || rawTarget.includes("/magnet?")
+          ? await resolveMagnet(rawTarget)
+          : rawTarget;
+        await postJson("/qb/add", {
+          urls,
+          name: title,
+          category,
+          metadata: {
+            ...metadata,
+            name: title || metadata.name || "",
+            searchQuery: activeSearchQuery || metadata.searchQuery || ""
+          }
+        });
+        toast("Sent to qBittorrent.");
+        await fetchQbTorrents(true);
+      } catch (error) {
+        toast(`qBittorrent add failed: ${error.message}`);
+        throw error;
+      }
+    }
+
+    function resultMetadataForTitle(title) {
+      const item = rawResults.find((result) => result.name === title) || {};
+      return {
+        name: item.name || title || "",
+        searchQuery: activeSearchQuery || "",
+        contentType: item.contentType || "",
+        source: item.source || item.sources?.[0]?.name || "",
+        sizeBytes: item.sizeBytes || 0,
+        seeders: item.seeders || 0,
+        infoHash: item.infoHash || ""
+      };
+    }
+
+    async function fetchQbTorrents(showErrors) {
+      if (!qBConfigured()) {
+        renderQbEmpty();
+        return;
+      }
+      try {
+        const json = await fetchJson(`${location.origin}/qb/torrents`);
+        const torrents = Array.isArray(json.torrents) ? json.torrents : [];
+        qbFailureCount = 0;
+        renderQbTorrents(torrents, json.transfer || {});
+        fetchSlowMonitorStatus();
+      } catch (error) {
+        qbFailureCount += 1;
+        els.qbSummary.textContent = "Connection failed";
+        els.qbStatus.textContent = error.message;
+        if (qbFailureCount >= 3) {
+          clearInterval(qbPollTimer);
+          qbPollTimer = null;
+          els.qbStatus.textContent = `${error.message} Polling paused after repeated failures. Use Test qBittorrent after changing settings.`;
+        }
+        if (showErrors) toast(`qBittorrent refresh failed: ${error.message}`);
+      }
+    }
+
+    async function fetchSlowMonitorStatus() {
+      if (!qBConfigured()) {
+        renderSlowMonitorStatus(null);
+        return;
+      }
+      try {
+        const status = await fetchJson(`${location.origin}/qb/monitor`);
+        renderSlowMonitorStatus(status);
+      } catch {
+        renderSlowMonitorStatus(null);
+      }
+    }
+
+    function renderSlowMonitorStatus(status) {
+      if (!els.slowMonitorStatus) return;
+      if (!settings.slowMonitorEnabled) {
+        els.slowMonitorStatus.textContent = "Backend monitor is off.";
+        return;
+      }
+      if (!status) {
+        els.slowMonitorStatus.textContent = "Backend monitor status unavailable.";
+        return;
+      }
+      const slowCount = (status.torrents || []).filter((torrent) => torrent.status === "slow").length;
+      const watchingCount = (status.torrents || []).filter((torrent) => torrent.status === "watching").length;
+      const lastRun = status.lastRunAt ? new Date(status.lastRunAt).toLocaleString() : "not yet";
+      const error = status.lastError ? ` Error: ${status.lastError}` : "";
+      els.slowMonitorStatus.textContent = `Last backend check ${lastRun}. ${slowCount} slow, ${watchingCount} being watched.${error}`;
+    }
+
+    function renderQbEmpty() {
+      els.qbSummary.textContent = qBConfigured() ? "No torrents loaded" : "Not connected";
+      els.qbStatus.textContent = qBConfigured() ? "Waiting for qBittorrent data." : "Configure qBittorrent in Settings.";
+      els.qbTorrentList.innerHTML = "";
+      qbDetailCache.clear();
+      qbTorrentsByHash.clear();
+      updateQbActionButtons();
+    }
+
+    function renderQbTorrents(torrents, transfer) {
+      const visibleHashes = new Set(torrents.map((torrent) => torrent.hash).filter(Boolean));
+      qbSelectedHashes = new Set([...qbSelectedHashes].filter((hash) => visibleHashes.has(hash)));
+      qbDetailCache = new Map([...qbDetailCache].filter(([hash]) => visibleHashes.has(hash)));
+      qbTorrentsByHash = new Map(torrents.filter((torrent) => torrent.hash).map((torrent) => [torrent.hash, torrent]));
+      const down = formatSpeed(transfer.dl_info_speed || transfer.dl_rate || 0);
+      const up = formatSpeed(transfer.up_info_speed || transfer.up_rate || 0);
+      els.qbSummary.textContent = `${torrents.length} torrent${torrents.length === 1 ? "" : "s"}`;
+      els.qbStatus.textContent = `Down ${down} / Up ${up}`;
+      els.qbTorrentList.innerHTML = torrents.length ? torrents.map(qbTorrentTemplate).join("") : `<div class="empty">No torrents in qBittorrent.</div>`;
+      els.qbTorrentList.querySelectorAll("[data-qb-hash]").forEach((input) => {
+        input.addEventListener("click", (event) => event.stopPropagation());
+        input.addEventListener("change", () => {
+          if (input.checked) qbSelectedHashes.add(input.dataset.qbHash);
+          else qbSelectedHashes.delete(input.dataset.qbHash);
+          updateQbActionButtons();
+        });
+      });
+      els.qbTorrentList.querySelectorAll("[data-qb-row-hash]").forEach((button) => {
+        button.addEventListener("click", () => {
+          openQbDetailModal(button.dataset.qbRowHash);
+        });
+      });
+      updateQbActionButtons();
+    }
+
+    function qbTorrentTemplate(torrent) {
+      const hash = torrent.hash || "";
+      const progress = Math.max(0, Math.min(1, Number(torrent.progress) || 0));
+      const checked = qbSelectedHashes.has(hash) ? "checked" : "";
+      const state = torrent.state || "unknown";
+      const stateInfo = qbStateInfo(torrent);
+      return `
+        <div class="qb-row ${escapeHtml(stateInfo.className)}">
+          <div class="qb-row-summary">
+            <input type="checkbox" data-qb-hash="${escapeHtml(hash)}" ${checked} aria-label="Select torrent">
+            <button class="qb-row-main" type="button" data-qb-row-hash="${escapeHtml(hash)}">
+              <div class="qb-name">
+                <strong title="${escapeHtml(torrent.name || hash)}">${escapeHtml(torrent.name || hash || "Unnamed torrent")}</strong>
+                <div class="qb-meta">
+                  <span>${Math.round(progress * 100)}%</span>
+                  <span class="qb-state-badge">${escapeHtml(stateInfo.label)}</span>
+                  <span>${formatBytes(torrent.size || 0)}</span>
+                  <span>${formatSpeed(torrent.dlspeed || 0)} down</span>
+                  <span>${formatSpeed(torrent.upspeed || 0)} up</span>
+                  <span>${formatNumber(torrent.num_seeds || 0)} seeds</span>
+                  ${torrent.category ? `<span>${escapeHtml(torrent.category)}</span>` : ""}
+                  <span>ETA ${formatEta(torrent.eta)}</span>
+                </div>
+              </div>
+              <div class="qb-progress" aria-hidden="true"><span style="width:${Math.round(progress * 100)}%"></span></div>
+              <span class="qb-detail-toggle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"></path></svg></span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function qbStateInfo(torrent = {}) {
+      const state = String(torrent.state || "").toLowerCase();
+      const progress = Number(torrent.progress) || 0;
+      const dlSpeed = Number(torrent.dlspeed) || 0;
+      const upSpeed = Number(torrent.upspeed) || 0;
+      if (state.includes("error") || state.includes("missing")) return { label: "Error", className: "state-error" };
+      if (state.includes("stalled")) return { label: progress >= 1 ? "Stalled seeding" : "Stalled", className: "state-stalled" };
+      if (state.includes("pause") || state.includes("stop")) return { label: progress >= 1 ? "Stopped seeding" : "Paused", className: state.includes("stop") ? "state-stopped" : "state-paused" };
+      if (state.includes("upload") || state.includes("seed")) return { label: upSpeed > 0 ? "Seeding" : "Queued seeding", className: "state-seeding" };
+      if (state.includes("download") || dlSpeed > 0) return { label: "Downloading", className: "state-downloading" };
+      if (state.includes("check")) return { label: "Checking", className: "state-active" };
+      if (state.includes("queued")) return { label: "Queued", className: "state-paused" };
+      if (progress >= 1) return { label: "Complete", className: "state-seeding" };
+      return { label: state || "Unknown", className: "state-stopped" };
+    }
+
+    async function openQbDetailModal(hash) {
+      if (!hash) return;
+      const torrent = latestQbTorrent(hash);
+      els.qbDetailTitle.textContent = torrent.name || hash || "qBittorrent torrent";
+      els.qbDetailModal.classList.add("show");
+      await loadQbTorrentDetails(hash);
+    }
+
+    function closeQbDetailModal() {
+      els.qbDetailModal.classList.remove("show");
+      els.qbDetailBody.innerHTML = "";
+    }
+
+    async function loadQbTorrentDetails(hash) {
+      if (!hash) return;
+      const container = els.qbDetailBody;
+      const torrent = latestQbTorrent(hash);
+      if (qbDetailCache.has(hash)) {
+        container.innerHTML = qbTorrentDetailTemplate(qbDetailCache.get(hash), torrent);
+        bindQbDetailActions(container);
+      } else {
+        container.innerHTML = `<div class="empty">Loading torrent details...</div>`;
+      }
+      try {
+        const details = await fetchJson(`/qb/details?hash=${encodeURIComponent(hash)}`);
+        qbDetailCache.set(hash, details);
+        container.innerHTML = qbTorrentDetailTemplate(details, latestQbTorrent(hash));
+        bindQbDetailActions(container);
+      } catch (error) {
+        container.innerHTML = `<div class="empty">Details failed: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function latestQbTorrent(hash) {
+      return qbTorrentsByHash.get(hash) || { hash };
+    }
+
+    function qbTorrentDetailTemplate(details, torrent = {}) {
+      const properties = details.properties && !details.properties.error ? details.properties : {};
+      const piece = details.pieceStates || {};
+      const files = Array.isArray(details.files) ? details.files : [];
+      const trackers = Array.isArray(details.trackers) ? details.trackers : [];
+      const category = torrent.category || "";
+      const categoryOptions = qbCategoryOptions(category);
+      return `
+        <div class="qb-detail-actions">
+          ${qbActionButton("start", torrent.hash, "Resume", "M8 5v14l11-7z", true)}
+          ${qbActionButton("stop", torrent.hash, "Pause", "M7 5h4v14H7zM13 5h4v14h-4z", true)}
+          ${qbActionButton("forceStart", torrent.hash, "Force resume", "M5 4 15 12 5 20V4zm10 0h4v16h-4V4z", true)}
+          ${qbActionButton("reannounce", torrent.hash, "Reannounce", "M12 2v4M12 18v4m-7.07-17.07 2.83 2.83m8.48 8.48 2.83 2.83M2 12h4M18 12h4m-17.07 7.07 2.83-2.83m8.48-8.48 2.83-2.83")}
+          ${qbActionButton("recoverSlow", torrent.hash, "Run slow recovery now", "M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5M3 12A9 9 0 0 1 18.5 5.7L21 8M21 3v5h-5")}
+          ${qbActionButton("recheck", torrent.hash, "Recheck", "M20 6 9 17l-5-5")}
+          ${qbActionButton("delete", torrent.hash, "Remove torrent", "M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6", false, "danger")}
+          ${qbActionButton("deleteFiles", torrent.hash, "Remove and delete files", "M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6", false, "danger")}
+        </div>
+        <div class="qb-category-editor" data-qb-category-editor="${escapeHtml(torrent.hash || "")}">
+          <label>
+            Category
+            <select data-qb-category-select>
+              ${categoryOptions.map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === category ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            Custom category
+            <input data-qb-category-custom autocomplete="off" value="${escapeHtml(category)}" placeholder="Type a category name">
+          </label>
+          <button class="primary" type="button" data-qb-category-apply="${escapeHtml(torrent.hash || "")}">Apply</button>
+        </div>
+        <div class="qb-detail-grid">
+          ${qbDetailStat("Downloaded", formatBytes(properties.total_downloaded || 0))}
+          ${qbDetailStat("Uploaded", formatBytes(properties.total_uploaded || 0))}
+          ${qbDetailStat("Ratio", formatDecimal(properties.share_ratio))}
+          ${qbDetailStat("Availability", formatDecimal(properties.availability))}
+          ${qbDetailStat("Pieces", piece.total ? `${formatNumber(piece.complete || 0)} / ${formatNumber(piece.total)}` : "Unknown")}
+          ${qbDetailStat("Active pieces", formatNumber(piece.active || 0))}
+          ${qbDetailStat("Connections", formatNumber(properties.connections || 0))}
+          ${qbDetailStat("Save path", properties.save_path || "Unknown")}
+        </div>
+        ${qbMonitorTemplate(details.monitor)}
+        <section class="qb-detail-section">
+          <h3>Files ${files.length ? `(${files.length})` : ""}</h3>
+          <div class="qb-file-list">
+            ${details.filesError ? `<div class="empty">${escapeHtml(details.filesError)}</div>` : files.slice(0, 8).map(qbFileTemplate).join("") || `<div class="empty">No file details yet.</div>`}
+            ${files.length > 8 ? `<div class="qb-detail-stat">Additional files<strong>${formatNumber(files.length - 8)} hidden</strong></div>` : ""}
+          </div>
+        </section>
+        <section class="qb-detail-section">
+          <h3>Trackers ${trackers.length ? `(${trackers.length})` : ""}</h3>
+          <div class="qb-tracker-list">
+            ${details.trackersError ? `<div class="empty">${escapeHtml(details.trackersError)}</div>` : trackers.slice(0, 5).map(qbTrackerTemplate).join("") || `<div class="empty">No tracker details yet.</div>`}
+            ${trackers.length > 5 ? `<div class="qb-detail-stat">Additional trackers<strong>${formatNumber(trackers.length - 5)} hidden</strong></div>` : ""}
+          </div>
+        </section>
+      `;
+    }
+
+    function qbCategoryOptions(currentCategory = "") {
+      const recent = Array.isArray(settings.qbRecentCategories) ? settings.qbRecentCategories : [];
+      const values = ["", currentCategory, settings.qbCategory, ...recent]
+        .map((category) => String(category || "").trim())
+        .filter((category, index, list) => list.indexOf(category) === index);
+      return values.map((category) => ({
+        value: category,
+        label: category || "No category"
+      }));
+    }
+
+    function qbActionButton(action, hash, label, path, fill = false, extraClass = "") {
+      return `
+        <button class="icon-button ${extraClass}" type="button" data-qb-action="${escapeHtml(action)}" data-qb-action-hash="${escapeHtml(hash || "")}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+          <svg viewBox="0 0 24 24" fill="${fill ? "currentColor" : "none"}" stroke="${fill ? "none" : "currentColor"}" stroke-width="2" aria-hidden="true"><path d="${escapeHtml(path)}"></path></svg>
+        </button>
+      `;
+    }
+
+    function qbDetailStat(label, value) {
+      return `<div class="qb-detail-stat">${escapeHtml(label)}<strong>${escapeHtml(value)}</strong></div>`;
+    }
+
+    function qbMonitorTemplate(monitor) {
+      if (!monitor) {
+        return `
+          <section class="qb-detail-section">
+            <h3>Slow Recovery</h3>
+            <div class="qb-file-list">
+              <div class="empty">No backend recovery checks recorded for this torrent yet.</div>
+            </div>
+          </section>
+        `;
+      }
+      const candidates = Array.isArray(monitor.candidates) ? monitor.candidates : [];
+      const actions = Array.isArray(monitor.actions) ? monitor.actions : [];
+      return `
+        <section class="qb-detail-section">
+          <h3>Slow Recovery</h3>
+          <div class="qb-detail-grid">
+            ${qbDetailStat("Monitor status", monitorStatusLabel(monitor.status))}
+            ${qbDetailStat("Last action", monitor.lastAction || "No recovery action yet")}
+            ${qbDetailStat("Slow since", formatDateTime(monitor.slowSince))}
+            ${qbDetailStat("Last checked", formatDateTime(monitor.lastSeenAt))}
+            ${qbDetailStat("Search query", monitor.searchQuery || monitor.metadata?.searchQuery || "Unknown")}
+            ${qbDetailStat("Alternatives", formatNumber(candidates.length))}
+          </div>
+          <div class="qb-file-list">
+            ${actions.length ? actions.slice(0, 5).map(qbMonitorActionTemplate).join("") : `<div class="empty">No recovery actions have been run yet.</div>`}
+          </div>
+          <h3>Alternative Matches ${candidates.length ? `(${candidates.length})` : ""}</h3>
+          <div class="qb-file-list">
+            ${candidates.length ? candidates.map(qbMonitorCandidateTemplate).join("") : `<div class="empty">${escapeHtml(qbMonitorAlternativeMessage(monitor))}</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function qbMonitorAlternativeMessage(monitor) {
+      if (monitor.lastAlternativeSearchError) return `Alternative search failed: ${monitor.lastAlternativeSearchError}`;
+      if (monitor.lastAlternativeSearchAt) return "Alternative search ran, but no better matching torrent was found.";
+      return "Alternative search has not run for this torrent. Enable Prowlarr alternative search in Settings, then run slow recovery.";
+    }
+
+    function qbMonitorActionTemplate(action) {
+      return `
+        <div class="qb-file-row">
+          <strong>${escapeHtml(action.action || "Recovery check")}</strong>
+          <span>${escapeHtml(formatDateTime(action.at))} - ${formatSpeed(action.speed || 0)} - ${formatNumber(action.seeds || 0)} seeds</span>
+        </div>
+      `;
+    }
+
+    function qbMonitorCandidateTemplate(candidate) {
+      const target = candidate.magnet || candidate.downloadUrl || "";
+      const encoded = encodeURIComponent(target);
+      return `
+        <div class="qb-file-row">
+          <strong>${escapeHtml(candidate.name || "Unnamed alternative")}</strong>
+          <span>${formatNumber(candidate.seeders || 0)} seeds - ${formatNumber(candidate.leechers || 0)} peers - ${formatBytes(candidate.sizeBytes || 0)} - ${escapeHtml(candidate.source || "Prowlarr")}</span>
+          ${target ? `<button class="mini-button" type="button" data-qb-add="${encoded}" title="Send alternative to qBittorrent">Send</button>` : ""}
+        </div>
+      `;
+    }
+
+    function monitorStatusLabel(value) {
+      const labels = {
+        healthy: "Healthy",
+        watching: "Below threshold",
+        slow: "Slow",
+        manual: "Manual check",
+        ignored: "Ignored",
+        new: "New"
+      };
+      return labels[value] || value || "Unknown";
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "Unknown";
+      const date = new Date(value);
+      if (Number.isNaN(date.valueOf())) return "Unknown";
+      return date.toLocaleString();
+    }
+
+    function qbFileTemplate(file) {
+      const progress = Math.round(Math.max(0, Math.min(1, Number(file.progress) || 0)) * 100);
+      return `
+        <div class="qb-file-row">
+          <strong>${escapeHtml(file.name || "Unnamed file")}</strong>
+          <span>${formatBytes(file.size || 0)} - ${progress}%</span>
+        </div>
+      `;
+    }
+
+    function qbTrackerTemplate(tracker) {
+      const status = tracker.status ? `Status ${tracker.status}` : "Tracker";
+      return `
+        <div class="qb-tracker-row">
+          <strong>${escapeHtml(tracker.url || "Unknown tracker")}</strong>
+          <span>${escapeHtml(status)}</span>
+        </div>
+      `;
+    }
+
+    function bindQbDetailActions(root) {
+      root.querySelectorAll("[data-qb-action]").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          await runSingleQbAction(button.dataset.qbAction, button.dataset.qbActionHash, button);
+        });
+      });
+      root.querySelectorAll("[data-qb-add]").forEach((button) => {
+        button.addEventListener("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const raw = decodeURIComponent(button.dataset.qbAdd || "");
+          const title = button.closest(".qb-file-row")?.querySelector("strong")?.textContent || "Alternative torrent";
+          await openQbAddDialog(raw, title);
+        });
+      });
+      root.querySelectorAll("[data-qb-category-select]").forEach((select) => {
+        select.addEventListener("change", () => {
+          const editor = select.closest("[data-qb-category-editor]");
+          const input = editor?.querySelector("[data-qb-category-custom]");
+          if (input) input.value = select.value;
+        });
+      });
+      root.querySelectorAll("[data-qb-category-apply]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const editor = button.closest("[data-qb-category-editor]");
+          const input = editor?.querySelector("[data-qb-category-custom]");
+          changeQbTorrentCategory(button.dataset.qbCategoryApply, input?.value || "");
+        });
+      });
+    }
+
+    function updateQbActionButtons() {
+      const disabled = qbSelectedHashes.size === 0;
+      [
+        els.qbStartButton,
+        els.qbStopButton,
+        els.qbForceButton,
+        els.qbReannounceButton,
+        els.qbRecheckButton,
+        els.qbDeleteButton
+      ].forEach((button) => {
+        button.disabled = disabled;
+      });
+    }
+
+    async function runSelectedQbAction(action) {
+      const hashes = [...qbSelectedHashes];
+      if (!hashes.length) return;
+      if (action === "delete" && !confirm("Delete the selected torrent from qBittorrent? Files will be kept.")) return;
+      try {
+        await postJson("/qb/action", { action, hashes, deleteFiles: false });
+        qbSelectedHashes.clear();
+        updateQbActionButtons();
+        toast("qBittorrent action sent.");
+        await fetchQbTorrents(true);
+      } catch (error) {
+        toast(`qBittorrent action failed: ${error.message}`);
+      }
+    }
+
+    async function runSingleQbAction(action, hash, button = null) {
+      if (!hash) return;
+      if (action === "recoverSlow") {
+        if (button) {
+          button.disabled = true;
+          button.dataset.originalTitle = button.title || "";
+          button.title = "Running slow recovery...";
+          button.setAttribute("aria-label", "Running slow recovery");
+        }
+        try {
+          const result = await postJson("/qb/monitor/check", { hash });
+          qbDetailCache.delete(hash);
+          const candidateNote = result.candidateCount ? ` Found ${result.candidateCount} alternative${result.candidateCount === 1 ? "" : "s"}.` : "";
+          toast(`Slow recovery ran: ${result.message || "checked torrent"}.${candidateNote}`);
+          await fetchQbTorrents(true);
+          if (els.qbDetailModal.classList.contains("show")) await loadQbTorrentDetails(hash);
+        } catch (error) {
+          toast(`Slow recovery failed: ${error.message}`);
+        } finally {
+          if (button) {
+            button.disabled = false;
+            button.title = button.dataset.originalTitle || "Run slow recovery now";
+            button.setAttribute("aria-label", button.title);
+          }
+        }
+        return;
+      }
+      const deleteFiles = action === "deleteFiles";
+      const apiAction = deleteFiles ? "delete" : action;
+      if (apiAction === "delete") {
+        const message = deleteFiles
+          ? "Delete this torrent and its downloaded files?"
+          : "Delete this torrent from qBittorrent? Files will be kept.";
+        if (!confirm(message)) return;
+      }
+      try {
+        await postJson("/qb/action", { action: apiAction, hashes: [hash], deleteFiles });
+        qbDetailCache.delete(hash);
+        toast("qBittorrent action sent.");
+        await fetchQbTorrents(true);
+      } catch (error) {
+        toast(`qBittorrent action failed: ${error.message}`);
+      }
+    }
+
+    async function changeQbTorrentCategory(hash, category) {
+      if (!hash) return;
+      try {
+        await postJson("/qb/action", { action: "setCategory", hashes: [hash], category: String(category || "").trim() });
+        rememberQbCategory(category);
+        qbDetailCache.delete(hash);
+        toast("qBittorrent category updated.");
+        await fetchQbTorrents(true);
+        if (els.qbDetailModal.classList.contains("show")) await loadQbTorrentDetails(hash);
+      } catch (error) {
+        toast(`Category update failed: ${error.message}`);
+      }
+    }
+
+    function renderProviderToggles() {
+      const torrentsCsv = providers.find((provider) => provider.id === "torrentscsv");
+      const prowlarrDisabled = settings.mode === "csvOnly";
+      const prowlarrControls = prowlarrProviderToggleItems(prowlarrDisabled);
+      els.providerToggles.innerHTML = `
+        <label class="check">
+          <input type="checkbox" data-provider="torrentscsv" ${providerToggleChecked(torrentsCsv) ? "checked" : ""}>
+          ${escapeHtml(torrentsCsv.name)}
+        </label>
+        ${prowlarrControls}
+      `;
+      els.providerToggles.querySelectorAll("[data-provider]").forEach((input) => {
+        input.addEventListener("change", () => {
+          settings.enabledProviders[input.dataset.provider] = input.checked;
+          persistSettings();
+          syncProviderAvailability();
+          renderProviderStatus();
+          renderStatusPills();
+        });
+      });
+      els.providerToggles.querySelectorAll("[data-prowlarr-indexer]").forEach((input) => {
+        input.addEventListener("change", () => {
+          settings.prowlarrIndexers[input.dataset.prowlarrIndexer] = input.checked;
+          persistSettings();
+          syncProviderAvailability();
+          renderProviderStatus();
+          renderStatusPills();
+        });
+      });
+    }
+
+    function prowlarrProviderToggleItems(disabled = false) {
+      if (prowlarrIndexersLoading) {
+        return `<label class="check"><input type="checkbox" disabled> Loading Prowlarr indexers</label>`;
+      }
+      if (prowlarrIndexersError) {
+        return `<label class="check"><input type="checkbox" disabled> Prowlarr unavailable</label>`;
+      }
+      if (!settings.prowlarrUrl || !settings.prowlarrKey) {
+        return `<label class="check"><input type="checkbox" disabled> Prowlarr setup required</label>`;
+      }
+      if (!prowlarrIndexers.length) {
+        return `<label class="check"><input type="checkbox" disabled> No Prowlarr indexers</label>`;
+      }
+      return prowlarrIndexers.map((indexer) => `
+        <label class="check">
+          <input type="checkbox" data-prowlarr-indexer="${escapeHtml(String(indexer.id))}" ${prowlarrIndexerEnabled(indexer.id) ? "checked" : ""} ${disabled ? "disabled" : ""}>
+          ${escapeHtml(indexer.name)}
+        </label>
+      `).join("");
+    }
+
+    function renderContentTypeOptions() {
+      els.contentTypeSelect.innerHTML = CONTENT_TYPES.map((type) =>
+        `<option value="${escapeHtml(type.value)}">${escapeHtml(type.label)}</option>`
+      ).join("");
+    }
+
+    function renderProxyPresets() {
+      els.proxyPreset.innerHTML = CORS_PROXY_PRESETS.map((preset) =>
+        `<option value="${escapeHtml(preset.id)}">${escapeHtml(preset.name)}</option>`
+      ).join("");
+    }
+
+    function inferProxyPreset(template) {
+      const value = String(template || "");
+      for (const preset of CORS_PROXY_PRESETS) {
+        if (preset.id === "custom") continue;
+        if (value === preset.template()) return preset.id;
+      }
+      if (isLocalProxyTemplate(value)) return "local";
+      return "custom";
+    }
+
+    function isLocalProxyTemplate(template) {
+      try {
+        const url = new URL(String(template || "").replace("{url}", "__URL__"));
+        return url.pathname === "/proxy" && url.searchParams.get("url") === "__URL__";
+      } catch {
+        return false;
+      }
+    }
+
+    function normalizeProxyTemplateForOrigin(template) {
+      const current = defaultProxyTemplate();
+      if (!current) return String(template || "");
+      return isLocalProxyTemplate(template) ? current : String(template || "");
+    }
+
+    function renderProviderStatus() {
+      const rows = providerStatusRows();
+      els.providerStatus.innerHTML = rows.map((row) => {
+        const dotClass = row.status === "ready" ? "ok" : ["error", "needs proxy", "needs setup"].includes(row.status) ? "warn" : "";
+        return `
+          <div class="provider">
+            <span class="dot ${dotClass}"></span>
+            <div>
+              <strong>${escapeHtml(row.name)}</strong>
+              <small>${escapeHtml(row.kind)} - ${escapeHtml(row.detail)}</small>
+            </div>
+            <span>${formatNumber(row.count)}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function providerStatusRows() {
+      const torrentsCsv = providers.find((provider) => provider.id === "torrentscsv");
+      const csvState = providerState.get("torrentscsv") || { status: "ready", count: 0, detail: "Direct browser fetch" };
+      const rows = [{
+        id: "torrentscsv",
+        name: torrentsCsv.name,
+        kind: torrentsCsv.kind,
+        ...csvState
+      }];
+      if (settings.mode === "csvOnly") return rows;
+
+      const prowlarrState = providerState.get("prowlarr") || { status: "needs setup", count: 0, detail: "Settings required" };
+      if (prowlarrIndexersLoading || prowlarrIndexersError || !settings.prowlarrUrl || !settings.prowlarrKey || !prowlarrIndexers.length) {
+        rows.push({
+          id: "prowlarr",
+          name: "Prowlarr indexers",
+          kind: "JSON API",
+          status: prowlarrIndexersError ? "error" : prowlarrIndexersLoading ? "searching" : "needs setup",
+          count: 0,
+          detail: prowlarrIndexersError || (prowlarrIndexersLoading ? "Loading indexers" : "Settings required")
+        });
+        return rows;
+      }
+
+      for (const indexer of prowlarrIndexers) {
+        const selected = prowlarrIndexerEnabled(indexer.id);
+        rows.push({
+          id: `prowlarr:${indexer.id}`,
+          name: indexer.name,
+          kind: "Prowlarr indexer",
+          status: selected ? prowlarrState.status : "disabled",
+          count: selected ? prowlarrState.count : 0,
+          detail: selected ? prowlarrState.detail : "Disabled"
+        });
+      }
+      return rows;
+    }
+
+    function renderStatusPills() {
+      const enabledCount = providerStatusRows().filter((row) => row.status !== "disabled" && row.status !== "needs setup").length;
+      const directCount = isProviderEnabled(providers.find((provider) => provider.id === "torrentscsv")) ? 1 : 0;
+      const proxyEnabled = settings.proxyTemplate.trim().length > 0;
+      const proxyHealthy = settings.mode === "csvOnly" || (proxyEnabled && !publicProxyInUse());
+      els.statusPills.innerHTML = `
+        <span class="pill"><span class="dot ok"></span>${settings.mode === "csvOnly" ? "CSV only" : "Backend mode"}</span>
+        <span class="pill"><span class="dot ok"></span>${enabledCount} enabled</span>
+        <span class="pill"><span class="dot ${directCount ? "ok" : "warn"}"></span>${directCount} direct</span>
+        <span class="pill"><span class="dot ${proxyHealthy ? "ok" : "warn"}"></span>${proxyLabel()}</span>
+      `;
+    }
+
+    function renderEmpty(message) {
+      els.results.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+    }
+
+    function renderModeSwitch() {
+      const csvOnly = settings.mode === "csvOnly";
+      els.csvOnlyModeButton.classList.toggle("active", csvOnly);
+      els.backendModeButton.classList.toggle("active", !csvOnly);
+      els.csvOnlyModeButton.setAttribute("aria-pressed", csvOnly ? "true" : "false");
+      els.backendModeButton.setAttribute("aria-pressed", csvOnly ? "false" : "true");
+    }
+
+    function switchMode(mode) {
+      settings.mode = mode === "csvOnly" ? "csvOnly" : "backend";
+      if (settings.mode === "backend") {
+        const template = defaultProxyTemplate();
+        if (template) {
+          settings.proxyTemplate = template;
+          els.proxyTemplate.value = template;
+          els.proxyPreset.value = "local";
+          toast("Backend proxy mode selected.");
+        } else {
+          toast("Backend mode selected. Start TorrenSearch first, then open http://127.0.0.1:8787.");
+        }
+      } else {
+        toast("Torrents.csv only mode selected.");
+      }
+      persistSettings();
+      syncProviderAvailability();
+      renderModeSwitch();
+      renderRuntimeWarning();
+      renderProviderToggles();
+      renderProviderStatus();
+      renderStatusPills();
+      refreshProwlarrIndexers();
+    }
+
+    function updateProvider(id, status, count, detail) {
+      providerState.set(id, { status, count, detail });
+      renderProviderStatus();
+    }
+
+    async function refreshProwlarrIndexers() {
+      if (!settings.prowlarrUrl || !settings.prowlarrKey || settings.mode === "csvOnly") {
+        prowlarrIndexers = [];
+        prowlarrIndexersLoading = false;
+        prowlarrIndexersError = "";
+        renderProviderToggles();
+        renderProviderStatus();
+        renderStatusPills();
+        return;
+      }
+
+      prowlarrIndexersLoading = true;
+      prowlarrIndexersError = "";
+      renderProviderToggles();
+      renderProviderStatus();
+      renderStatusPills();
+
+      try {
+        const fetchUrl = (url) => {
+          if (!settings.proxyTemplate.trim()) return url;
+          return settings.proxyTemplate.trim().replace("{url}", encodeURIComponent(url));
+        };
+        prowlarrIndexers = await fetchProwlarrIndexers(fetchUrl);
+        if (!settings.prowlarrIndexers || typeof settings.prowlarrIndexers !== "object") settings.prowlarrIndexers = {};
+        for (const indexer of prowlarrIndexers) {
+          const key = String(indexer.id);
+          if (!Object.prototype.hasOwnProperty.call(settings.prowlarrIndexers, key)) {
+            settings.prowlarrIndexers[key] = true;
+          }
+        }
+        persistSettings();
+      } catch (error) {
+        prowlarrIndexers = [];
+        prowlarrIndexersError = error.message || "Could not load Prowlarr indexers";
+      } finally {
+        prowlarrIndexersLoading = false;
+        syncProviderAvailability();
+        renderProviderToggles();
+        renderProviderStatus();
+        renderStatusPills();
+      }
+    }
+
+    function prowlarrIndexerEnabled(id) {
+      const key = String(id);
+      if (!settings.prowlarrIndexers || typeof settings.prowlarrIndexers !== "object") settings.prowlarrIndexers = {};
+      return settings.prowlarrIndexers[key] !== false;
+    }
+
+    function prowlarrSelectedIndexers() {
+      return prowlarrIndexers.filter((indexer) => prowlarrIndexerEnabled(indexer.id));
+    }
+
+    function syncProviderAvailability() {
+      for (const provider of providers) {
+        const enabled = isProviderEnabled(provider);
+        const blocker = providerBlocker(provider);
+        if (!enabled) {
+          providerState.set(provider.id, { status: "disabled", count: 0, detail: "Disabled" });
+        } else if (blocker) {
+          providerState.set(provider.id, { status: blocker.status, count: 0, detail: blocker.detail });
+        } else {
+          providerState.set(provider.id, { status: "ready", count: 0, detail: provider.direct ? "Direct browser fetch" : proxyProviderDetail() });
+        }
+      }
+    }
+
+    function providerBlocker(provider) {
+      const missing = (provider.requires || []).filter((key) => !settings[key]);
+      if (missing.length) return { status: "needs setup", detail: "Settings required" };
+      if (!provider.direct && !settings.proxyTemplate.trim()) return { status: "needs proxy", detail: "Set a proxy to enable" };
+      return null;
+    }
+
+    function setSummary(mergedCount, rawCount, detail) {
+      els.summary.innerHTML = `<strong>${formatNumber(mergedCount)}</strong> unified result${mergedCount === 1 ? "" : "s"} from ${formatNumber(rawCount)} raw hit${rawCount === 1 ? "" : "s"}. ${escapeHtml(detail)}`;
+    }
+
+    function saveSettingsFromInputs() {
+      settings.proxyTemplate = els.proxyTemplate.value.trim();
+      settings.trackers = parseTrackerList(els.trackerList.value);
+      settings.jackettUrl = els.jackettUrl.value.trim();
+      settings.jackettKey = els.jackettKey.value.trim();
+      settings.prowlarrUrl = els.prowlarrUrl.value.trim();
+      settings.prowlarrKey = els.prowlarrKey.value.trim();
+      settings.prowlarrLimit = normalizeProwlarrLimit(els.prowlarrLimit.value);
+      settings.qbUrl = els.qbUrl.value.trim();
+      settings.qbUsername = els.qbUsername.value.trim();
+      settings.qbPassword = els.qbPassword.value;
+      settings.qbApiKey = els.qbApiKey.value.trim();
+      settings.qbPollSeconds = Math.max(2, Math.floor(Number(els.qbPollSeconds.value) || 5));
+      settings.qbCategory = els.qbCategory.value.trim();
+      settings.qbSavePath = els.qbSavePath.value.trim();
+      settings.qbAddPaused = els.qbAddPaused.checked;
+      settings.qbSequential = els.qbSequential.checked;
+      settings.qbFirstLastPiece = els.qbFirstLastPiece.checked;
+      settings.slowMonitorEnabled = els.slowMonitorEnabled.checked;
+      settings.slowMonitorCheckMinutes = Math.max(1, Math.floor(Number(els.slowMonitorCheckMinutes.value) || 5));
+      settings.slowMonitorMinBytesPerSecond = Math.max(1024, Math.floor(Number(els.slowMonitorMinKibPerSecond.value) || 512) * 1024);
+      settings.slowMonitorSlowMinutes = Math.max(1, Math.floor(Number(els.slowMonitorSlowMinutes.value) || 10));
+      settings.slowMonitorCooldownMinutes = Math.max(5, Math.floor(Number(els.slowMonitorCooldownMinutes.value) || 60));
+      settings.slowMonitorIgnoreProgress = Math.min(1, Math.max(0.1, (Number(els.slowMonitorIgnoreProgressPercent.value) || 95) / 100));
+      settings.slowMonitorIgnorePaused = els.slowMonitorIgnorePaused.checked;
+      settings.slowMonitorAddTrackers = els.slowMonitorAddTrackers.checked;
+      settings.slowMonitorSearchAlternatives = els.slowMonitorSearchAlternatives.checked;
+      if (!settings.trackers.length) settings.trackers = [...DEFAULT_TRACKERS];
+      persistSettings();
+      syncProviderAvailability();
+      renderRuntimeWarning();
+      renderProviderStatus();
+      renderStatusPills();
+    }
+
+    async function refreshTrackersFromNgosang() {
+      const previousLabel = els.trackerRefreshButton.textContent;
+      els.trackerRefreshButton.disabled = true;
+      els.trackerRefreshButton.textContent = "Updating...";
+      els.trackerRefreshStatus.textContent = "Fetching trackers_best.txt...";
+      try {
+        const text = await fetchText(NGOSANG_TRACKERS_BEST_URL);
+        const trackers = parseTrackerList(text);
+        if (!trackers.length) throw new Error("No trackers found in downloaded list");
+        settings.trackers = trackers;
+        els.trackerList.value = trackers.join(", ");
+        saveSettingsFromInputs();
+        els.trackerRefreshStatus.textContent = `${formatNumber(trackers.length)} trackers saved from ngosang.`;
+        toast(`Updated ${formatNumber(trackers.length)} public trackers.`);
+      } catch (error) {
+        els.trackerRefreshStatus.textContent = `Update failed: ${error.message}`;
+        toast(`Tracker update failed: ${error.message}`);
+      } finally {
+        els.trackerRefreshButton.disabled = false;
+        els.trackerRefreshButton.textContent = previousLabel;
+      }
+    }
+
+    function saveResultFilterSettings() {
+      settings.sort = els.sort.value;
+      settings.contentType = els.contentTypeSelect.value;
+      settings.sortDirection = els.sortDirection.value;
+      settings.minSeeders = normalizeNumberInput(els.minSeeders.value);
+      settings.maxLeechers = normalizeNumberInput(els.maxLeechers.value);
+      settings.minSize = sizeGigabytesToBytes(els.minSize.value);
+      persistSettings();
+      currentPage = 1;
+      renderResults(rawResults);
+      renderPresetButtons();
+      renderFilterSummary();
+      if (rawResults.length) {
+        setSummary(rawResults.length, rawResults.length, `Viewing saved results.${filterSummary()}`);
+      }
+    }
+
+    function renderPresetButtons() {
+      document.querySelectorAll("[data-preset-target]").forEach((button) => {
+        const target = els[button.dataset.presetTarget];
+        const value = button.dataset.presetTarget === "minSize"
+          ? normalizeDecimalInput(target?.value || "")
+          : normalizeNumberInput(target?.value || "");
+        button.classList.toggle("active", value === button.dataset.presetValue);
+      });
+    }
+
+    function renderFilterSummary() {
+      const parts = [];
+      if (settings.minSeeders) parts.push(`${settings.minSeeders}+ seeders`);
+      if (settings.maxLeechers) parts.push(`${settings.maxLeechers} max leechers`);
+      if (settings.minSize) parts.push(`${formatBytes(settings.minSize)}+`);
+      if (settings.contentType) parts.unshift(contentTypeLabel(settings.contentType));
+      if (settings.sortDirection === "asc") parts.push("low first");
+      els.filterSummary.textContent = parts.length ? parts.join(" · ") : "Default";
+    }
+
+    function contentTypeLabel(value) {
+      return CONTENT_TYPES.find((type) => type.value === value)?.label || "Other";
+    }
+
+    function resultHasContentType(item, contentType) {
+      if (item.contentType === contentType) return true;
+      if (Array.isArray(item.contentTypes) && item.contentTypes.includes(contentType)) return true;
+      if (activeSearchQuery && (!item.contentType || item.contentType === "other")) {
+        return isRelevantSearchResult(item, activeSearchQuery);
+      }
+      return false;
+    }
+
+    function normalizeNumberInput(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) return "";
+      return String(Math.max(0, Math.floor(Number(trimmed) || 0)));
+    }
+
+    function normalizeProwlarrLimit(value) {
+      return Math.min(500, Math.max(20, Math.floor(Number(value) || DEFAULT_PROWLARR_LIMIT)));
+    }
+
+    function parseTrackerList(value) {
+      return [...new Set(String(value || "")
+        .split(/[\s,]+/)
+        .map((item) => item.trim())
+        .filter((item) => /^(udp|https?|wss?):\/\//i.test(item)))];
+    }
+
+    function normalizeDecimalInput(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) return "";
+      const number = Math.max(0, Number(trimmed) || 0);
+      return String(Number(number.toFixed(3)));
+    }
+
+    function sizeGigabytesToBytes(value) {
+      return Math.floor(Number(normalizeDecimalInput(value) || 0) * 1024 * 1024 * 1024);
+    }
+
+    function formatGigabytesInput(bytes) {
+      const value = toNumber(bytes);
+      if (!value) return "";
+      return String(Number((value / 1024 / 1024 / 1024).toFixed(3)));
+    }
+
+    function renderRuntimeWarning() {
+      const fileMode = location.protocol === "file:";
+      const publicProxy = publicProxyInUse();
+      const localAvailable = Boolean(defaultProxyTemplate());
+      let title = "";
+      let text = "";
+      let buttonText = "Use local proxy";
+      let showButton = false;
+
+      if (settings.mode === "csvOnly") {
+        title = "";
+        text = "";
+      } else if (fileMode) {
+        title = "Open the local server URL";
+        text = "This page is running from file://. Proxy-backed providers cannot use the built-in local proxy from this mode, so most providers will time out. Run .\\Start-TorrenSearch.ps1 and open http://127.0.0.1:8787.";
+        buttonText = "Server required";
+      } else if (publicProxy) {
+        title = "Public proxy selected";
+        text = "Public CORS proxies are unreliable for torrent indexes and often return 400/403/500 responses. The built-in local proxy is the working path for multi-provider results.";
+        showButton = localAvailable;
+      }
+
+      els.runtimeWarning.classList.toggle("show", Boolean(title));
+      els.runtimeWarningTitle.textContent = title || "Proxy notice";
+      els.runtimeWarningText.textContent = text;
+      els.useLocalProxyButton.textContent = buttonText;
+      els.useLocalProxyButton.hidden = !showButton && !fileMode;
+      els.useLocalProxyButton.disabled = fileMode;
+    }
+
+    function publicProxyInUse() {
+      const preset = inferProxyPreset(settings.proxyTemplate);
+      return ["allorigins", "corsproxyio", "codetabs"].includes(preset);
+    }
+
+    function proxyLabel() {
+      if (settings.mode === "csvOnly") return "Proxy unused";
+      if (!settings.proxyTemplate.trim()) return "Proxy off";
+      if (publicProxyInUse()) return "Public proxy";
+      if (inferProxyPreset(settings.proxyTemplate) === "local") return "Local proxy";
+      return "Custom proxy";
+    }
+
+    function proxyProviderDetail() {
+      if (publicProxyInUse()) return "Public proxy configured";
+      if (inferProxyPreset(settings.proxyTemplate) === "local") return "Local proxy configured";
+      return "Proxy configured";
+    }
+
+    function defaultSettings() {
+      const localProxyTemplate = defaultProxyTemplate();
+      return {
+        mode: location.protocol === "file:" ? "csvOnly" : "backend",
+        sort: "seeders",
+        contentType: "",
+        sortDirection: "desc",
+        minSeeders: "",
+        maxLeechers: "",
+        minSize: 0,
+        providerDefaultsVersion: 2,
+        proxyTemplate: localProxyTemplate,
+        jackettUrl: "",
+        jackettKey: "",
+        prowlarrUrl: "",
+        prowlarrKey: "",
+        prowlarrLimit: DEFAULT_PROWLARR_LIMIT,
+        prowlarrIndexers: {},
+        qbUrl: "",
+        qbUsername: "",
+        qbPassword: "",
+        qbApiKey: "",
+        qbPollSeconds: 5,
+        qbCategory: "",
+        qbSavePath: "",
+        qbAddPaused: false,
+        qbSequential: false,
+        qbFirstLastPiece: false,
+        qbRecentCategories: [],
+        slowMonitorEnabled: false,
+        slowMonitorCheckMinutes: 5,
+        slowMonitorMinBytesPerSecond: 512 * 1024,
+        slowMonitorSlowMinutes: 10,
+        slowMonitorCooldownMinutes: 60,
+        slowMonitorIgnoreProgress: 0.95,
+        slowMonitorIgnorePaused: true,
+        slowMonitorAddTrackers: true,
+        slowMonitorSearchAlternatives: false,
+        trackers: [...DEFAULT_TRACKERS],
+        enabledProviders: Object.fromEntries(providers.map((provider) => [provider.id, provider.enabled]))
+      };
+    }
+
+    function mergeSavedSettings(saved = {}) {
+      const fallback = defaultSettings();
+      const localProxyTemplate = defaultProxyTemplate();
+      if (!saved.proxyTemplate && localProxyTemplate) {
+        saved.proxyTemplate = localProxyTemplate;
+      }
+      const merged = {
+        ...fallback,
+        ...saved,
+        enabledProviders: { ...fallback.enabledProviders, ...(saved.enabledProviders || {}) },
+        prowlarrIndexers: { ...fallback.prowlarrIndexers, ...(saved.prowlarrIndexers || {}) }
+      };
+      if ((saved.providerDefaultsVersion || 0) < 2) {
+        Object.assign(merged.enabledProviders, {
+          yts: true,
+          nyaa: true,
+          internetarchive: true,
+          eztv: true
+        });
+        merged.providerDefaultsVersion = 2;
+      }
+      merged.proxyTemplate = normalizeProxyTemplateForOrigin(merged.proxyTemplate);
+      merged.prowlarrLimit = normalizeProwlarrLimit(merged.prowlarrLimit);
+      if (!Array.isArray(merged.trackers) || !merged.trackers.length) merged.trackers = [...DEFAULT_TRACKERS];
+      return merged;
+    }
+
+    function loadSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        return mergeSavedSettings(saved);
+      } catch {
+        return defaultSettings();
+      }
+    }
+
+    async function hydrateBackendSettings() {
+      const url = backendSettingsUrl();
+      if (!url) return;
+      try {
+        const response = await fetchWithTimeout(url, { headers: { accept: "application/json" } });
+        if (!response.ok) return;
+        const saved = await response.json();
+        if (saved && typeof saved === "object" && !Array.isArray(saved) && Object.keys(saved).length) {
+          settings = mergeSavedSettings(saved);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        } else {
+          scheduleBackendSettingsSave();
+        }
+      } catch {
+        // Local browser settings remain the fallback when the backend is unavailable.
+      }
+    }
+
+    function defaultProxyTemplate() {
+      if (location.protocol === "http:" || location.protocol === "https:") {
+        return `${location.origin}/proxy?url={url}`;
+      }
+      return "";
+    }
+
+    function isProviderEnabled(provider) {
+      if (settings.mode === "csvOnly") return provider.id === "torrentscsv";
+      if (provider.id === "prowlarr") return prowlarrSelectedIndexers().length > 0;
+      if (provider.id !== "torrentscsv") return false;
+      return settings.enabledProviders[provider.id] ?? provider.enabled;
+    }
+
+    function providerToggleChecked(provider) {
+      if (settings.mode === "csvOnly") return provider.id === "torrentscsv";
+      if (provider.id === "prowlarr") return prowlarrSelectedIndexers().length > 0;
+      if (provider.id !== "torrentscsv") return false;
+      return settings.enabledProviders[provider.id] ?? provider.enabled;
+    }
+
+    function persistSettings() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      scheduleBackendSettingsSave();
+    }
+
+    function scheduleBackendSettingsSave() {
+      const url = backendSettingsUrl();
+      if (!url) return;
+      clearTimeout(backendSaveTimer);
+      backendSaveTimer = setTimeout(() => {
+        fetch(url, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(settings)
+        }).catch(() => {});
+      }, 350);
+    }
+
+    async function persistBackendSettingsNow() {
+      const url = backendSettingsUrl();
+      if (!url) return;
+      clearTimeout(backendSaveTimer);
+      await fetch(url, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(settings)
+      });
+    }
+
+    function backendSettingsUrl() {
+      if (location.protocol !== "http:" && location.protocol !== "https:") return "";
+      return `${location.origin}/settings`;
+    }
+
+    async function fetchJson(url) {
+      const response = await fetchWithTimeout(url, { headers: { accept: "application/json,text/plain,*/*" } });
+      if (!response.ok) throw new Error(await response.text() || `HTTP ${response.status}`);
+      return response.json();
+    }
+
+    async function postJson(url, body) {
+      const response = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json,text/plain,*/*" },
+        body: JSON.stringify(body || {})
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    }
+
+    async function fetchText(url) {
+      const response = await fetchWithTimeout(url, { headers: { accept: "application/xml,text/xml,text/plain,*/*" } });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.text();
+    }
+
+    async function fetchProwlarrIndexers(fetchUrl) {
+      const url = new URL(`${trimSlash(settings.prowlarrUrl)}/api/v1/indexer`);
+      url.searchParams.set("apikey", settings.prowlarrKey);
+      const json = await fetchJson(fetchUrl(url.toString()));
+      return (Array.isArray(json) ? json : [])
+        .filter((indexer) => indexer?.id && indexer.enable !== false && String(indexer.protocol || "torrent").toLowerCase() === "torrent")
+        .map((indexer) => ({ id: indexer.id, name: indexer.name || `Indexer ${indexer.id}` }));
+    }
+
+    function prowlarrSearchUrl(query, categories, limit, indexerIds = []) {
+      const url = new URL(`${trimSlash(settings.prowlarrUrl)}/api/v1/search`);
+      if (query) url.searchParams.set("query", query);
+      url.searchParams.set("type", "search");
+      url.searchParams.set("apikey", settings.prowlarrKey);
+      url.searchParams.set("limit", String(limit));
+      if (categories.length) url.searchParams.set("categories", categories.join(","));
+      if (indexerIds.length) url.searchParams.set("indexerIds", indexerIds.join(","));
+      return url.toString();
+    }
+
+    async function fetchWithTimeout(url, options = {}) {
+      const controller = new AbortController();
+      const lookupSignal = activeProviderLookupController?.signal;
+      const upstreamSignal = options.signal || lookupSignal;
+      const abortFromUpstream = () => controller.abort();
+      if (upstreamSignal) {
+        if (upstreamSignal.aborted) controller.abort();
+        else upstreamSignal.addEventListener("abort", abortFromUpstream, { once: true });
+      }
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } catch (error) {
+        if (error.name === "AbortError" && upstreamSignal?.aborted) throw new Error("Request stopped");
+        if (error.name === "AbortError") throw new Error("Request timed out");
+        throw error;
+      } finally {
+        clearTimeout(timer);
+        if (upstreamSignal) upstreamSignal.removeEventListener("abort", abortFromUpstream);
+      }
+    }
+
+    function parseXml(xml) {
+      const doc = new DOMParser().parseFromString(xml, "application/xml");
+      const error = doc.querySelector("parsererror");
+      if (error) throw new Error("Invalid XML response");
+      return doc;
+    }
+
+    function parseTorznab(xml, sourceName) {
+      const doc = parseXml(xml);
+      return [...doc.querySelectorAll("item")].map((item) => {
+        const magnet = torznabAttr(item, "magneturl") || text(item, "magneturl");
+        const infoHash = torznabAttr(item, "infohash") || infoHashFromMagnet(magnet);
+        const categories = torznabAttrs(item, "category");
+        const enclosure = item.querySelector("enclosure");
+        const torrentUrl = magnet ? "" : enclosure?.getAttribute("url") || text(item, "link");
+        const sourceKind = categoryLabelFromCategories(categories) || torznabAttr(item, "category") || "Torznab";
+        return {
+          name: text(item, "title"),
+          infoHash,
+          seeders: toNumber(torznabAttr(item, "seeders") || torznabAttr(item, "seed") || text(item, "seeders")),
+          leechers: toNumber(torznabAttr(item, "leechers") || torznabAttr(item, "peers") || text(item, "leechers")),
+          sizeBytes: toNumber(torznabAttr(item, "size") || enclosure?.getAttribute("length") || text(item, "size")),
+          createdAt: text(item, "pubDate") ? new Date(text(item, "pubDate")) : null,
+          source: sourceName,
+          sourceKind,
+          contentType: inferContentType({ source: sourceName, sourceKind, categories, name: text(item, "title") }),
+          magnet,
+          torrentUrl,
+          url: text(item, "guid") || text(item, "comments") || text(item, "link") || torrentUrl
+        };
+      }).filter((item) => item.name && (item.infoHash || item.magnet || item.torrentUrl || item.url));
+    }
+
+    function normalizeProwlarrItem(item, indexer = null) {
+      const suppliedMagnet = item.magnetUrl || item.magnet || (String(item.downloadUrl || "").startsWith("magnet:") ? item.downloadUrl : "");
+      const infoHash = item.infoHash || item.infohash || infoHashFromMagnet(suppliedMagnet);
+      const name = item.title || item.name || "Unnamed result";
+      const magnet = suppliedMagnet || buildMagnet(infoHash, name);
+      const linkCandidates = [item.downloadUrlLocal, item.downloadUrl, item.infoUrl, item.guid].filter(Boolean).map(String);
+      const resolveUrl = magnet ? "" : linkCandidates.find(isProwlarrDownloadUrl) || "";
+      const torrentUrl = "";
+      const sourceUrl = linkCandidates.find((url) => url.startsWith("http") && !isProwlarrDownloadUrl(url)) || "";
+      const categories = normalizeCategories(item.categories || item.category || item.categoriesDesc || item.categoryDesc || []);
+      const sourceKind = categoryLabelFromCategories(categories) || item.categoryDesc || item.indexer || item.indexerName || "Prowlarr";
+      return {
+        name,
+        infoHash,
+        seeders: toNumber(item.seeders || item.grabs),
+        leechers: toNumber(item.leechers || item.peers),
+        sizeBytes: toNumber(item.size),
+        createdAt: item.publishDate || item.added ? new Date(item.publishDate || item.added) : null,
+        source: item.indexer || item.indexerName || indexer?.name || "Prowlarr",
+        sourceKind,
+        contentType: inferContentType({ source: "Prowlarr", sourceKind, categories, name }),
+        magnet,
+        torrentUrl,
+        resolveUrl,
+        url: sourceUrl
+      };
+    }
+
+    function normalizePirateBayItems(items) {
+      return (Array.isArray(items) ? items : [])
+        .filter((item) => item.info_hash && !/^0+$/.test(item.info_hash))
+        .map((item) => ({
+          name: item.name,
+          infoHash: item.info_hash,
+          seeders: toNumber(item.seeders),
+          leechers: toNumber(item.leechers),
+          sizeBytes: toNumber(item.size),
+          createdAt: item.added ? new Date(toNumber(item.added) * 1000) : null,
+          source: "The Pirate Bay",
+          sourceKind: pirateBayCategoryName(item.category) || "Tracker index",
+          contentType: inferContentType({ source: "The Pirate Bay", categories: [item.category], sourceKind: pirateBayCategoryName(item.category), name: item.name }),
+          url: `https://thepiratebay.org/description.php?id=${encodeURIComponent(item.id)}`
+        }));
+    }
+
+    function normalizeTorrentsCsvItems(items, query) {
+      return (Array.isArray(items) ? items : []).map((item) => ({
+        name: item.name,
+        infoHash: item.infohash,
+        seeders: toNumber(item.seeders),
+        leechers: toNumber(item.leechers),
+        sizeBytes: toNumber(item.size_bytes),
+        createdAt: item.created_unix ? new Date(item.created_unix * 1000) : null,
+        source: "Torrents.csv",
+        sourceKind: "DHT index",
+        contentType: inferContentType({ source: "Torrents.csv", sourceKind: "DHT index", name: item.name }),
+        url: `https://torrents-csv.com/#/search/${encodeURIComponent(item.name || query)}`
+      }));
+    }
+
+    async function fetchYtsMovies(fetchUrl, options = {}) {
+      const origins = ["https://movies-api.accel.li", "https://yts.ag", "https://yts.lt", "https://yts.mx", "https://yts.rs"];
+      const pages = [1, 2, 3, 4];
+      const textQuery = options.textTerms?.join(" ") || "";
+      const queryTerm = textQuery || options.year || "";
+      let lastError = null;
+      for (const origin of origins) {
+        try {
+          const batches = await Promise.all(pages.map(async (page) => {
+            const url = new URL("/api/v2/list_movies.json", origin);
+            url.searchParams.set("limit", "50");
+            url.searchParams.set("page", String(page));
+            url.searchParams.set("sort_by", "seeds");
+            url.searchParams.set("order_by", "desc");
+            if (queryTerm) url.searchParams.set("query_term", queryTerm);
+            if (options.quality) url.searchParams.set("quality", options.quality);
+            const json = await fetchJson(fetchUrl(url.toString()));
+            return (json.data?.movies || []).filter((movie) => !options.year || toNumber(movie.year) === toNumber(options.year));
+          }));
+          return batches.flat();
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("YTS search failed");
+    }
+
+    function normalizeYtsMovies(movies) {
+      return (Array.isArray(movies) ? movies : []).flatMap((movie) => {
+        const torrents = Array.isArray(movie.torrents) ? movie.torrents : [];
+        return torrents.map((torrent) => {
+          const quality = [torrent.quality, torrent.type].filter(Boolean).join(" ");
+          const nameParts = [
+            movie.title_long || movie.title || "YTS movie",
+            quality ? `[${quality}]` : "",
+            torrent.video_codec ? `[${torrent.video_codec}]` : "",
+            torrent.bit_depth ? `[${torrent.bit_depth}bit]` : ""
+          ].filter(Boolean);
+          return {
+            name: nameParts.join(" "),
+            year: toNumber(movie.year),
+            infoHash: torrent.hash || "",
+            seeders: toNumber(torrent.seeds),
+            leechers: toNumber(torrent.peers),
+            sizeBytes: toNumber(torrent.size_bytes),
+            createdAt: torrent.date_uploaded_unix ? new Date(toNumber(torrent.date_uploaded_unix) * 1000) : null,
+            source: "YTS",
+            sourceKind: quality || "Movie API",
+            contentType: "movies",
+            torrentUrl: torrent.url || "",
+            url: movie.url || torrent.url || ""
+          };
+        });
+      }).filter((item) => item.name && (item.infoHash || item.torrentUrl || item.url));
+    }
+
+    function normalizeEztvItem(item) {
+      return {
+        name: item.title || item.filename,
+        infoHash: item.hash,
+        seeders: toNumber(item.seeds),
+        leechers: toNumber(item.peers),
+        sizeBytes: toNumber(item.size_bytes),
+        createdAt: item.date_released_unix ? new Date(toNumber(item.date_released_unix) * 1000) : null,
+        source: "EZTV",
+        sourceKind: "TV JSON API",
+        contentType: "tv",
+        magnet: item.magnet_url,
+        url: item.imdb_id ? `https://www.imdb.com/title/tt${item.imdb_id}/` : ""
+      };
+    }
+
+    function pirateBayTopCategories(contentType) {
+      const map = {
+        movies: [201, 207, 209],
+        tv: [205, 206, 208, 212],
+        music: [101, 104],
+        games: [400],
+        software: [300],
+        books: [601, 602],
+        adult: [500],
+        anime: [200],
+        other: [600]
+      };
+      return map[contentType] || [];
+    }
+
+    function pirateBaySearchCategories(contentType) {
+      const map = {
+        movies: [201, 202, 207, 209, 211],
+        tv: [205, 206, 208, 212],
+        music: [101, 102, 104],
+        games: [400],
+        software: [300],
+        books: [601, 602],
+        adult: [500],
+        anime: [200]
+      };
+      return map[contentType] || [];
+    }
+
+    function archiveMediaType(contentType) {
+      const map = {
+        movies: "movies",
+        tv: "movies",
+        anime: "movies",
+        music: "audio",
+        software: "software",
+        books: "texts",
+        other: "collection"
+      };
+      return map[contentType] || "";
+    }
+
+    function archiveSearchQuery(query, contentType) {
+      const escaped = escapeArchiveQuery(query);
+      const mediatype = archiveMediaType(contentType);
+      return mediatype ? `title:(${escaped}) AND mediatype:${mediatype}` : `title:(${escaped})`;
+    }
+
+    function escapeArchiveQuery(value) {
+      return String(value || "")
+        .trim()
+        .split(/\s+/)
+        .map((term) => term.replace(/[(){}\[\]^"~*?:\\/+!-]/g, "\\$&"))
+        .join(" AND ");
+    }
+
+    function torrentsCsvTopQueries(contentType) {
+      const map = {
+        movies: ["1080p", "2160p", "bluray", "webrip"],
+        tv: ["s01e", "s02e", "season", "hdtv", "web-dl"],
+        anime: ["anime", "1080p anime", "manga"],
+        music: ["flac", "mp3", "discography", "album"],
+        games: ["game", "codex", "fitgirl", "repack"],
+        software: ["windows", "macos", "linux", "software"],
+        books: ["pdf", "epub", "ebook", "audiobook"],
+        adult: ["xxx"],
+        other: ["documentary", "course", "tutorial"]
+      };
+      return map[contentType] || ["1080p", "s01e", "flac", "windows", "game", "pdf"];
+    }
+
+    function prowlarrTopQueries(contentType) {
+      if (contentType === "adult") return ["", "xxx"];
+      return torrentsCsvTopQueries(contentType).slice(0, contentType ? 4 : 6);
+    }
+
+    function torznabCategories(contentType) {
+      const map = {
+        movies: [2000],
+        tv: [5000],
+        anime: [5070],
+        music: [3000],
+        games: [1000],
+        software: [4000],
+        books: [7000],
+        adult: [6000]
+      };
+      return map[contentType] || [];
+    }
+
+    function torznabUrl(baseUrl, apiKey, query, contentType = "") {
+      const url = new URL(baseUrl);
+      url.searchParams.set("apikey", apiKey);
+      url.searchParams.set("t", "search");
+      url.searchParams.set("q", query);
+      url.searchParams.set("limit", String(MAX_RESULTS));
+      const categories = torznabCategories(contentType);
+      if (categories.length) url.searchParams.set("cat", categories.join(","));
+      return url.toString();
+    }
+
+    function torznabAttr(item, name) {
+      const attr = [...item.getElementsByTagName("*")].find((node) =>
+        node.localName === "attr" && node.getAttribute("name")?.toLowerCase() === name.toLowerCase()
+      );
+      return attr?.getAttribute("value") || "";
+    }
+
+    function torznabAttrs(item, name) {
+      return [...item.getElementsByTagName("*")]
+        .filter((node) => node.localName === "attr" && node.getAttribute("name")?.toLowerCase() === name.toLowerCase())
+        .map((node) => node.getAttribute("value") || "")
+        .filter(Boolean);
+    }
+
+    function normalizeCategories(value) {
+      if (Array.isArray(value)) {
+        return value.flatMap((item) => normalizeCategories(item));
+      }
+      if (value && typeof value === "object") {
+        return normalizeCategories([value.id, value.name, value.label, value.description].filter(Boolean));
+      }
+      return String(value || "")
+        .split(/[,\s|/]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function inferContentType(item = {}) {
+      const source = String(item.source || "").toLowerCase();
+      const textValue = `${item.sourceKind || ""} ${item.name || ""} ${normalizeCategories(item.categories).join(" ")}`.toLowerCase();
+      const categories = normalizeCategories(item.categories);
+      const numericTypes = categories
+        .map(categoryIdFromToken)
+        .filter((category) => category !== null);
+
+      if (source.includes("nyaa") || source.includes("animetosho")) return "anime";
+      if (source.includes("eztv")) return "tv";
+      if (source.includes("distrowatch")) return "software";
+
+      for (const category of numericTypes) {
+        const mapped = contentTypeFromCategoryId(category);
+        if (mapped) return mapped;
+      }
+
+      if (/\b(anime|manga)\b/.test(textValue)) return "anime";
+      if (/\b(tv|television|episode|episodes|series|season|seasons|shows?|web[- ]?dl|hdtv|s\d{1,2}e\d{1,2})\b/.test(textValue)) return "tv";
+      if (/\b(video games?|pc games?|fitgirl|repack|gog|steam|nintendo|switch|playstation|xbox|ps[345])\b/.test(textValue)) return "games";
+      if (/\b(movie|movies|film|films|trilogy|bluray|blu[- ]?ray|b[dr]rip|webrip|hdrip|dvdrip|remux|x26[45]|h\.?26[45]|hevc|yify|yts|imax|2160p|1080p|720p)\b/.test(textValue)) return "movies";
+      if (/\b(audio|music|album|flac|mp3)\b/.test(textValue)) return "music";
+      if (/\b(app|apps|software|pc|mac|linux|windows|iso|distro)\b/.test(textValue)) return "software";
+      if (/\b(book|books|ebook|ebooks|text|texts|pdf|magazine|comic)\b/.test(textValue)) return "books";
+      if (/\b(xxx|adult|porn)\b/.test(textValue)) return "adult";
+      return "other";
+    }
+
+    function categoryIdFromToken(value) {
+      const text = String(value || "").trim();
+      const match = text.match(/^(?:cat(?:egory)?[:=])?(\d{2,5})$/i);
+      return match ? Number(match[1]) : null;
+    }
+
+    function contentTypeFromCategoryId(category) {
+      const top = Math.floor(category / 1000) * 1000;
+      const pirateBayTvCategories = new Set([205, 206, 208, 212]);
+      const pirateBayMovieCategories = new Set([201, 202, 204, 207, 209, 210, 211, 299]);
+      if (pirateBayTvCategories.has(category)) return "tv";
+      if (pirateBayMovieCategories.has(category)) return "movies";
+      if (top === 1000) return "games";
+      if (top === 2000) return "movies";
+      if (top === 3000) return "music";
+      if (top === 4000) return "software";
+      if (top === 5000) return category === 5070 ? "anime" : "tv";
+      if (top === 6000) return "adult";
+      if (top === 7000) return "books";
+
+      if (category >= 100 && category < 200) return "music";
+      if (category >= 200 && category < 300) return "movies";
+      if (category >= 300 && category < 400) return "software";
+      if (category >= 400 && category < 500) return "games";
+      if (category >= 500 && category < 600) return "adult";
+      if (category >= 600 && category < 700) return "books";
+      return "";
+    }
+
+    function pirateBayCategoryName(category) {
+      const labels = {
+        100: "Audio",
+        101: "Music",
+        102: "Audio books",
+        103: "Sound clips",
+        104: "FLAC",
+        200: "Video",
+        201: "Movies",
+        202: "Movies DVDR",
+        204: "Movie clips",
+        205: "TV Shows",
+        206: "TV Other",
+        207: "HD Movies",
+        208: "HD TV Shows",
+        209: "3D Movies",
+        210: "CAM/TS Movies",
+        211: "UHD/4K Movies",
+        212: "UHD/4K TV Shows",
+        299: "Video Other",
+        300: "Applications",
+        400: "Games",
+        500: "Adult",
+        600: "Other",
+        601: "E-books",
+        602: "Comics"
+      };
+      const value = Number(category);
+      return labels[value] || labels[Math.floor(value / 100) * 100] || "";
+    }
+
+    function categoryLabelFromCategories(categories) {
+      const type = inferContentType({ categories });
+      return type === "other" ? "" : contentTypeLabel(type);
+    }
+
+    function queryTerms(query) {
+      return query.toLowerCase().split(/\s+/).map((term) => term.trim()).filter(Boolean);
+    }
+
+    function parseSearchQuery(query) {
+      const allTerms = queryTerms(query);
+      const textTerms = [];
+      let year = "";
+      let quality = "";
+      for (const term of allTerms) {
+        const normalized = normalizeSearchText(term);
+        const yearMatch = normalized.match(/^(19\d{2}|20\d{2})$/);
+        const qualityMatch = normalized.match(/^(720p|1080p|2160p|4k)$/);
+        if (yearMatch) {
+          year = yearMatch[1];
+        } else if (qualityMatch) {
+          quality = qualityMatch[1] === "4k" ? "2160p" : qualityMatch[1];
+        } else if (normalized) {
+          textTerms.push(normalized);
+        }
+      }
+      return {
+        original: query,
+        allTerms,
+        textTerms,
+        year,
+        quality
+      };
+    }
+
+    function matchesTerms(value, terms) {
+      const haystack = String(value || "").toLowerCase();
+      return terms.every((term) => haystack.includes(term));
+    }
+
+    function isRelevantSearchResult(item, query) {
+      const parsed = parseSearchQuery(query);
+      const title = normalizeSearchText(item.name || "");
+      const sourceKind = normalizeSearchText(item.sourceKind || "");
+      if (parsed.textTerms.length && !parsed.textTerms.every((term) => title.includes(term))) return false;
+      if (parsed.year && toNumber(item.year) !== toNumber(parsed.year) && !title.includes(parsed.year)) return false;
+      if (parsed.quality && !title.includes(parsed.quality) && !sourceKind.includes(parsed.quality)) return false;
+      return parsed.textTerms.length > 0 || Boolean(parsed.year || parsed.quality);
+    }
+
+    function searchRelevanceScore(item, query) {
+      const parsed = parseSearchQuery(query);
+      const terms = parsed.textTerms.length ? parsed.textTerms : [parsed.year, parsed.quality].filter(Boolean);
+      if (!terms.length) return 0;
+      const title = normalizeSearchText(item.name || "");
+      const phrase = normalizeSearchText(query);
+      let score = 0;
+      if (title === phrase) score += 100;
+      if (phrase && title.includes(phrase)) score += 60;
+      score += terms.filter((term) => title.includes(term)).length * 10;
+      if (parsed.year && (toNumber(item.year) === toNumber(parsed.year) || title.includes(parsed.year))) score += 20;
+      if (parsed.quality && title.includes(parsed.quality)) score += 15;
+      if (title.startsWith(terms[0])) score += 5;
+      return score;
+    }
+
+    function normalizeSearchText(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function trimSlash(value) {
+      return String(value || "").replace(/\/+$/, "");
+    }
+
+    function buildMagnet(infoHash, name) {
+      if (!infoHash) return "";
+      const params = [`xt=urn:btih:${encodeURIComponent(infoHash)}`];
+      if (name) params.push(`dn=${encodeURIComponent(name)}`);
+      for (const tracker of settings.trackers) params.push(`tr=${encodeURIComponent(tracker)}`);
+      return `magnet:?${params.join("&")}`;
+    }
+
+    function magnetResolverUrl(url, name) {
+      if (!url) return "";
+      const target = new URL("/magnet", location.origin);
+      target.searchParams.set("url", url);
+      if (name) target.searchParams.set("name", name);
+      for (const tracker of settings.trackers) target.searchParams.append("tr", tracker);
+      return target.toString();
+    }
+
+    function isProwlarrDownloadUrl(value) {
+      if (!value) return false;
+      try {
+        const url = new URL(String(value));
+        return url.pathname.includes("/download") && (url.searchParams.has("apikey") || url.searchParams.has("link"));
+      } catch {
+        return String(value).includes("/download?") && String(value).includes("apikey=");
+      }
+    }
+
+    async function resolveMagnet(url) {
+      const target = new URL(url);
+      target.searchParams.set("format", "json");
+      const json = await fetchJson(target.toString());
+      if (!json.magnet) throw new Error("Magnet resolution failed");
+      return json.magnet;
+    }
+
+    function sorter(mode, direction = "desc") {
+      const multiplier = direction === "asc" ? 1 : -1;
+      return (a, b) => {
+        let primary = 0;
+        if (mode === "name") primary = (a.name || "").localeCompare(b.name || "") * (direction === "asc" ? 1 : -1);
+        else if (mode === "size") primary = ((a.sizeBytes || 0) - (b.sizeBytes || 0)) * multiplier;
+        else if (mode === "sources") primary = ((a.sourceCount || 0) - (b.sourceCount || 0)) * multiplier;
+        else if (mode === "leechers") primary = ((a.leechers || 0) - (b.leechers || 0)) * multiplier;
+        else primary = ((a.seeders || 0) - (b.seeders || 0)) * multiplier;
+        if (primary) return primary;
+
+        const relevance = activeSearchQuery
+          ? searchRelevanceScore(b, activeSearchQuery) - searchRelevanceScore(a, activeSearchQuery)
+          : 0;
+        if (relevance) return relevance;
+        const seedTie = (b.seeders || 0) - (a.seeders || 0);
+        if (seedTie) return seedTie;
+        return (a.name || "").localeCompare(b.name || "");
+      };
+    }
+
+    function text(node, selector) {
+      const found = node.querySelector(selector);
+      return found ? found.textContent.trim() : "";
+    }
+
+    function infoHashFromMagnet(magnet) {
+      if (!magnet) return "";
+      const match = magnet.match(/btih:([a-fA-F0-9]{40}|[a-zA-Z2-7]{32})/);
+      return match ? match[1] : "";
+    }
+
+    function normalizeName(name) {
+      return (name || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function toNumber(value) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function parseSize(value) {
+      if (!value) return 0;
+      const match = String(value).trim().match(/^([\d.]+)\s*([kmgtp]?i?b)$/i);
+      if (!match) return toNumber(value);
+      const unit = match[2].toLowerCase();
+      const powers = { b: 0, kb: 1, kib: 1, mb: 2, mib: 2, gb: 3, gib: 3, tb: 4, tib: 4, pb: 5, pib: 5 };
+      return Number(match[1]) * Math.pow(1024, powers[unit] || 0);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return "Unknown size";
+      const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+      let size = bytes;
+      let index = 0;
+      while (size >= 1024 && index < units.length - 1) {
+        size /= 1024;
+        index += 1;
+      }
+      return `${size >= 10 || index === 0 ? size.toFixed(0) : size.toFixed(1)} ${units[index]}`;
+    }
+
+    function formatSpeed(bytesPerSecond) {
+      return bytesPerSecond ? `${formatBytes(bytesPerSecond)}/s` : "0 B/s";
+    }
+
+    function formatEta(seconds) {
+      const value = Number(seconds);
+      if (!Number.isFinite(value) || value < 0 || value >= 8640000) return "--";
+      if (value < 60) return `${Math.floor(value)}s`;
+      const minutes = Math.floor(value / 60);
+      if (minutes < 60) return `${minutes}m`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 48) return `${hours}h ${minutes % 60}m`;
+      return `${Math.floor(hours / 24)}d`;
+    }
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat().format(value || 0);
+    }
+
+    function formatDecimal(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number.toFixed(2) : "Unknown";
+    }
+
+    function cssEscape(value) {
+      if (window.CSS?.escape) return CSS.escape(value);
+      return String(value).replace(/["\\]/g, "\\$&");
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    async function copyText(value) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    function toast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+  </script>
+</body>
+</html>

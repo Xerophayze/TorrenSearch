@@ -1,0 +1,19 @@
+services:
+  torrensearch:
+    image: node:22-alpine
+    container_name: torrensearch
+    working_dir: /app
+    command: ["node", "server.js"]
+    restart: unless-stopped
+    ports:
+      - "${TORRENSEARCH_PORT:-8787}:8787"
+    volumes:
+      - ${TORRENSEARCH_APP_PATH:-/volume2/docker/torrensearch}:/app:ro
+      - ${TORRENSEARCH_DATA_PATH:-/volume2/docker/torrensearch-data}:/data
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      DATA_DIR: /data
+      PROWLARR_FALLBACK_URLS: ${PROWLARR_FALLBACK_URLS:-http://127.0.0.1:9696,http://localhost:9696}
+      PROXY_TOKEN: ${PROXY_TOKEN:-}
+      ALLOWED_PROXY_HOSTS: ${ALLOWED_PROXY_HOSTS:-}

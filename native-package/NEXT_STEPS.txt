@@ -1,0 +1,175 @@
+TorrenSearch Native Package - Next Steps
+========================================
+
+The installer has installed the native software pieces. Before TorrenSearch can fully manage torrents, configure qBittorrent, Prowlarr, and optionally your VPN.
+
+Service URLs
+------------
+
+TorrenSearch:
+  http://127.0.0.1:8787
+
+qBittorrent:
+  http://127.0.0.1:8080
+
+Prowlarr:
+  http://127.0.0.1:9696
+
+
+1. Configure qBittorrent First
+------------------------------
+
+Open qBittorrent:
+  http://127.0.0.1:8080
+
+In qBittorrent, enable the Web UI:
+
+  Tools / Options -> Web UI
+
+Set or confirm:
+
+  Web UI enabled: yes
+  Web UI port: 8080
+  Username: choose one and write it down
+  Password: choose one and write it down
+
+If your qBittorrent build or setup provides an API key/token option, write that down too. Most qBittorrent Web API setups use username/password instead of a separate API key.
+
+You will paste these into TorrenSearch later:
+
+  qBittorrent URL: http://127.0.0.1:8080
+  qBittorrent username: <your username>
+  qBittorrent password/API key: <your credential>
+
+
+2. Configure Prowlarr
+---------------------
+
+Open Prowlarr:
+  http://127.0.0.1:9696
+
+Complete any first-run setup screens.
+
+Add torrent indexers:
+
+  Indexers -> Add Indexer
+
+Then find/copy the Prowlarr API key:
+
+  Settings -> General -> Security -> API Key
+
+You will paste this into TorrenSearch later:
+
+  Prowlarr URL: http://127.0.0.1:9696
+  Prowlarr API key: <copied API key>
+
+
+3. Configure TorrenSearch
+-------------------------
+
+Start TorrenSearch:
+
+  run.bat
+
+Then open:
+  http://127.0.0.1:8787
+
+In TorrenSearch Settings, confirm or enter:
+
+  Prowlarr URL: http://127.0.0.1:9696
+  Prowlarr API key: <from Prowlarr>
+  qBittorrent URL: http://127.0.0.1:8080
+  qBittorrent username: <from qBittorrent>
+  qBittorrent password/API key: <from qBittorrent>
+
+Click:
+
+  Test qBittorrent
+
+Then run a search and send a result to qBittorrent.
+
+
+4. Optional VPN Setup
+---------------------
+
+TorrenSearch can work with any VPN setup. The native package can help start a WireGuard tunnel if you provide a WireGuard config file.
+
+AirVPN basic flow:
+
+  1. Create or log into an AirVPN account.
+  2. In the AirVPN client area, create a WireGuard device/config.
+  3. Download the WireGuard .conf file.
+  4. Put that .conf file in:
+
+       native-package\vpn\
+
+  5. Run:
+
+       run.bat
+
+If a .conf file is found, the run script will try to install/start it as a WireGuard tunnel. Windows may ask for administrator approval.
+
+AirVPN port forwarding:
+
+  1. In the AirVPN client area, create a forwarded port.
+  2. In qBittorrent, set the listening port to the AirVPN forwarded port:
+
+       Tools / Options -> Connection -> Listening Port
+
+  3. Make sure your VPN tunnel is active before downloading.
+
+If you use another VPN provider, use that provider's WireGuard/OpenVPN/app setup. The important part is that qBittorrent traffic should be routed through the VPN before downloading.
+
+
+5. Local Network Access
+-----------------------
+
+By default, TorrenSearch listens only on this computer:
+
+  http://127.0.0.1:8787
+
+To allow phones or other computers on your local network to reach it, run:
+
+  run-lan.bat
+
+Then open the LAN URL printed by the script, usually something like:
+
+  http://192.168.x.x:8787
+
+If Windows Firewall asks, allow access on Private networks.
+
+If the page does not load from another device:
+
+  1. Confirm both devices are on the same network.
+  2. Confirm Windows Firewall allows inbound TCP 8787.
+  3. Do not expose this directly to the public internet unless you understand the security risk.
+
+
+6. Remote Access / Port Forwarding
+----------------------------------
+
+For access from outside your home network, prefer a VPN back into your home network such as WireGuard, Tailscale, ZeroTier, AirVPN DDNS/forwarding, or your router's VPN feature.
+
+If you choose router port forwarding anyway:
+
+  1. Give this computer a static LAN IP or DHCP reservation.
+  2. Forward an external TCP port to this computer's TCP 8787.
+  3. Run TorrenSearch in LAN mode with run-lan.bat.
+  4. Use a strong VPN/firewall strategy. TorrenSearch is intended for private use.
+
+Do not expose qBittorrent or Prowlarr directly to the public internet unless you fully understand the security implications.
+
+
+Daily Use
+---------
+
+Start local-only mode:
+  run.bat
+
+Start LAN mode:
+  run-lan.bat
+
+Stop the TorrenSearch backend:
+  stop.bat
+
+Prowlarr, qBittorrent, and WireGuard are native apps/services and may continue running after stop.bat.
